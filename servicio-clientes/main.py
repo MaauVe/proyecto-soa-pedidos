@@ -3,10 +3,12 @@ Servicio de Clientes — Puerto 8001
 Gestión del catálogo de clientes del sistema SOA de pedidos y entregas.
 """
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from config import LOG_LEVEL, PORT
+from database import init_db
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -15,8 +17,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger("servicio-clientes")
 
+# ── Lifespan (arranque y apagado) ─────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Inicializa la BD y el seed al arrancar; libera recursos al apagar."""
+    logger.info("Arrancando servicio-clientes en puerto %s...", PORT)
+    init_db()
+    yield
+    logger.info("Apagando servicio-clientes.")
+
+
 # ── Aplicación FastAPI ─────────────────────────────────────────────────────────
 app = FastAPI(
+    lifespan=lifespan,
     title="Servicio de Clientes",
     description=(
         "API REST para la gestión del catálogo de clientes. "

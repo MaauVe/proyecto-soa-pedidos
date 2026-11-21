@@ -2,8 +2,8 @@
 
 ## Estado Actual
 - **Fase**: 1 — servicio-clientes, implementación en curso
-- **Tarea completada**: T-01 — Estructura base ✅ (verificada 2026-11-20)
-- **Siguiente tarea**: T-02 — Modelo de datos y BD (SQLite + seed) — pendiente de aprobación
+- **Tarea completada**: T-02 — Modelo de datos y BD ✅ (9/9 pytest, 2026-11-20)
+- **Siguiente tarea**: T-03 — Autenticación X-API-Key + /health — pendiente de aprobación
 - **Fecha de inicio**: 2026-11-19
 
 ## Decisiones Técnicas T-01
