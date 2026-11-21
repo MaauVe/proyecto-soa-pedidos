@@ -67,3 +67,13 @@ class CustomerResponse(CustomerBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerListResponse(BaseModel):
+    """Esquema para la lista paginada de clientes."""
+    items: list[CustomerResponse]
+    total: int = Field(..., ge=0, description="Total de clientes que cumplen el criterio")
+    page: int = Field(..., ge=1, description="Página actual")
+    page_size: int = Field(..., ge=1, le=100, description="Elementos por página")
+    total_pages: int = Field(..., ge=0, description="Total de páginas disponibles")
+

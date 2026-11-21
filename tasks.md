@@ -18,7 +18,7 @@
 | T-03 | Autenticación X-API-Key + /health | RF-9, RF-10 | ✅ Completada |
 | T-04 | Crear cliente (POST /customers) | RF-2 | ✅ Completada |
 | T-05 | Consulta por ID (GET /customers/{id}) | RF-3 | ✅ Completada |
-| T-06 | Listado paginado (GET /customers) | RF-4 | ⬜ Pendiente |
+| T-06 | Listado paginado (GET /customers) | RF-4 | ✅ Completada |
 | T-07 | Actualización parcial (PATCH /customers/{id}) | RF-5 | ⬜ Pendiente |
 | T-08 | Desactivación lógica (DELETE /customers/{id}) | RF-6 | ⬜ Pendiente |
 | T-09 | Reactivación (PATCH /customers/{id}/reactivate) | RF-7 | ⬜ Pendiente |
@@ -213,5 +213,5 @@
 
 ## Tarea Actual
 
-> 🔵 **Siguiente: T-06 — Listado paginado (GET /customers)**  
-> T-05 completada y verificada (7/7 tests T-05, suite acumulada 45/45). Esperando aprobación para iniciar T-06.
+> 🔵 **Siguiente: T-07 — Actualización parcial (PATCH /customers/{id})**  
+> T-06 completada y verificada (10/10 tests T-06, suite acumulada 55/55). Esperando aprobación para iniciar T-07.

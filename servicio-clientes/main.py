@@ -3,9 +3,11 @@ Servicio de Clientes — Puerto 8001
 Gestión del catálogo de clientes del sistema SOA de pedidos y entregas.
 """
 import logging
+import math
 from contextlib import asynccontextmanager
+from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -13,7 +15,7 @@ from auth import verify_api_key
 from config import LOG_LEVEL, PORT
 from database import get_db, init_db
 from models import Customer
-from schemas import CustomerCreate, CustomerResponse
+from schemas import CustomerCreate, CustomerListResponse, CustomerResponse
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -115,6 +117,47 @@ def create_customer(
     db.refresh(new_customer)
     logger.info("Cliente creado exitosamente con ID: %s", new_customer.id)
     return new_customer
+
+
+@app.get(
+    "/customers",
+    response_model=CustomerListResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Clientes"],
+    summary="Listado paginado de clientes",
+    description="Retorna el listado paginado de clientes con opción de filtrar por estado activo/inactivo.",
+)
+def list_customers(
+    page: int = Query(1, ge=1, description="Número de página (≥ 1)"),
+    page_size: int = Query(20, ge=1, le=100, description="Cantidad de elementos por página (1 a 100)"),
+    is_active: Optional[bool] = Query(None, description="Filtrar por estado activo (true/false)"),
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Lista clientes con paginación y filtro opcional por estado.
+    """
+    query = db.query(Customer)
+    if is_active is not None:
+        query = query.filter(Customer.is_active == is_active)
+
+    total = query.count()
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+
+    items = (
+        query.order_by(Customer.id.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @app.get(

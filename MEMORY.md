@@ -2,11 +2,11 @@
 
 ## Estado Actual
 - **Fase**: 1 — servicio-clientes, implementación en curso
-- **Tarea completada**: T-05 ✅ — GET /customers/{id} (7/7 tests, suite 45/45, 2026-11-21)
-- **Siguiente tarea**: T-06 — GET /customers (listado paginado) — pendiente de aprobación
+- **Tarea completada**: T-06 ✅ — GET /customers (10/10 tests, suite 55/55, 2026-11-21)
+- **Siguiente tarea**: T-07 — PATCH /customers/{id} — pendiente de aprobación
 - **Fecha de inicio**: 2026-11-19
 
-## Decisión de Testing (CRÍTICA — aplicar en T-06 a T-11)
+## Decisión de Testing (CRÍTICA — aplicar en T-07 a T-11)
 El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 - Handlers y dependencias FastAPI → declarar como `def` síncronos, no `async def`
 - Tests → llamar funciones directamente sin `asyncio.run` ni `TestClient`
@@ -19,7 +19,7 @@ El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 | `clientes.db` | En `servicio-clientes/` vía `Path(__file__).parent` |
 | Test client HTTP | Bloqueado en sandbox; usar llamadas directas y schemas |
 | SQLAlchemy | v2.1.9 síncrono; `SessionLocal` en `database.py` |
-| Endpoints completados | `/health`, `POST /customers`, `GET /customers/{id}` |
+| Endpoints completados | `/health`, `POST /customers`, `GET /customers/{id}`, `GET /customers` |
 
 ## Decisiones de Spec — servicio-clientes (aprobada 2026-11-20)
 | Eliminación | Borrado lógico `is_active=false`; reactivación por admin |
@@ -43,7 +43,7 @@ El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 
 ## Próximos Pasos
 1. ⬜ Commit en GitHub tras cada tarea (responsabilidad del desarrollador).
-2. 🔵 T-06: GET /customers — listado paginado y filtros.
-3. ⬜ T-07 a T-11: Endpoints restantes de servicio-clientes.
+2. 🔵 T-07: PATCH /customers/{id} — actualización parcial de cliente.
+3. ⬜ T-08 a T-11: Endpoints restantes de servicio-clientes.
 4. ⬜ Fases 2-4: Implementar servicios inventario, envíos, pedidos.
 5. ⬜ Fase 5: Implementar cliente-web.
