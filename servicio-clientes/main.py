@@ -5,6 +5,7 @@ Gestión del catálogo de clientes del sistema SOA de pedidos y entregas.
 import logging
 import math
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
@@ -15,7 +16,12 @@ from auth import verify_api_key
 from config import LOG_LEVEL, PORT
 from database import get_db, init_db
 from models import Customer
-from schemas import CustomerCreate, CustomerListResponse, CustomerResponse
+from schemas import (
+    CustomerCreate,
+    CustomerListResponse,
+    CustomerResponse,
+    CustomerUpdate,
+)
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -184,4 +190,67 @@ def get_customer(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cliente no encontrado.",
         )
+    return customer
+
+
+@app.patch(
+    "/customers/{customer_id}",
+    response_model=CustomerResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Clientes"],
+    summary="Actualización parcial de cliente",
+    description="Actualiza uno o varios campos de un cliente existente.",
+)
+def update_customer(
+    customer_id: int,
+    customer_in: CustomerUpdate,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Actualiza parcialmente los datos de un cliente.
+    Retorna HTTP 404 si el cliente no existe.
+    Retorna HTTP 409 si el correo nuevo ya pertenece a otro cliente.
+    """
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        logger.warning("Cliente no encontrado con ID: %s", customer_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+
+    update_data = customer_in.model_dump(exclude_unset=True)
+    if not update_data:
+        return customer
+
+    # Si se actualiza el email, validar que no pertenezca a otro cliente (case-insensitive)
+    if "email" in update_data and update_data["email"] is not None:
+        new_email = update_data["email"].strip()
+        existing_email_customer = (
+            db.query(Customer)
+            .filter(
+                func.lower(Customer.email) == new_email.lower(),
+                Customer.id != customer_id,
+            )
+            .first()
+        )
+        if existing_email_customer:
+            logger.warning(
+                "Conflicto de correo al actualizar cliente ID %s: %s",
+                customer_id,
+                new_email,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe un cliente registrado con ese correo electrónico.",
+            )
+
+    for field, value in update_data.items():
+        setattr(customer, field, value)
+
+    customer.updated_at = datetime.now(UTC).replace(tzinfo=None)
+    db.commit()
+    db.refresh(customer)
+    logger.info("Cliente ID %s actualizado exitosamente.", customer.id)
     return customer
