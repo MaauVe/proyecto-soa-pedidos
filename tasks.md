@@ -23,7 +23,7 @@
 | T-08 | Desactivación lógica (DELETE /customers/{id}) | RF-6 | ✅ Completada |
 | T-09 | Reactivación (PATCH /customers/{id}/reactivate) | RF-7 | ✅ Completada |
 | T-10 | Endpoint de validación (GET /customers/{id}/validate) | RF-8 | ✅ Completada |
-| T-11 | Revisión final, casos límite y criterios de finalización | CF-1 a CF-10 | ⬜ Pendiente |
+| T-11 | Revisión final, casos límite y criterios de finalización | CF-1 a CF-10 | ✅ Completada |
 
 ---
 
@@ -213,5 +213,6 @@
 
 ## Tarea Actual
 
-> 🔵 **Siguiente: T-11 — Revisión final, casos límite y criterios de finalización**  
-> T-10 completada y verificada (7/7 tests T-10, suite acumulada 90/90). Esperando aprobación para iniciar T-11.
+> 🎉 **Fase 1 — Servicio de Clientes COMPLETADA Y VERIFICADA (90/90 tests pytest).**  
+> Todos los endpoints implementados, criterios CF-1 a CF-10 cumplidos.  
+> Esperando confirmación para iniciar la Fase 2 (Servicio de Inventario).

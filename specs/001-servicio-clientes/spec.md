@@ -221,17 +221,17 @@ Los siguientes elementos quedan **explícitamente excluidos** de esta especifica
 
 La especificación se considera **implementada y verificada** cuando:
 
-- [ ] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-10), incluyendo los casos límite de la sección 7, y todas pasan.
-- [ ] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
-- [ ] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
-- [ ] **CF-4:** `POST /customers` con correo duplicado (cualquier combinación de mayúsculas) retorna HTTP 409.
-- [ ] **CF-5:** `GET /customers/{id}/validate` retorna 200, 404 o 409 según el estado del cliente.
-- [ ] **CF-6:** `DELETE /customers/{id}` produce borrado lógico; el registro sigue consultable por `GET /customers/{id}`.
-- [ ] **CF-7:** El servicio arranca sin errores con una BD nueva y carga automáticamente 3–5 clientes semilla.
-- [ ] **CF-8:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
-- [ ] **CF-9:** Ninguna URL, puerto ni clave está hardcodeada en el código; todo proviene de variables de entorno.
-- [ ] **CF-10:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
+- [x] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-10), incluyendo los casos límite de la sección 7, y todas pasan.
+- [x] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
+- [x] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
+- [x] **CF-4:** `POST /customers` con correo duplicado (cualquier combinación de mayúsculas) retorna HTTP 409.
+- [x] **CF-5:** `GET /customers/{id}/validate` retorna 200, 404 o 409 según el estado del cliente.
+- [x] **CF-6:** `DELETE /customers/{id}` produce borrado lógico; el registro sigue consultable por `GET /customers/{id}`.
+- [x] **CF-7:** El servicio arranca sin errores con una BD nueva y carga automáticamente 3–5 clientes semilla.
+- [x] **CF-8:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
+- [x] **CF-9:** Ninguna URL, puerto ni clave está hardcodeada en el código; todo proviene de variables de entorno.
+- [x] **CF-10:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
 
 ---
 
-*Fin de la especificación — versión borrador. Pendiente de aprobación antes de proceder al plan de implementación.*
+*Fin de la especificación — Versión implementada y verificada satisfactoriamente (Fase 1 completada).*
