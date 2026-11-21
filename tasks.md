@@ -20,7 +20,7 @@
 | T-05 | Consulta por ID (GET /customers/{id}) | RF-3 | ✅ Completada |
 | T-06 | Listado paginado (GET /customers) | RF-4 | ✅ Completada |
 | T-07 | Actualización parcial (PATCH /customers/{id}) | RF-5 | ✅ Completada |
-| T-08 | Desactivación lógica (DELETE /customers/{id}) | RF-6 | ⬜ Pendiente |
+| T-08 | Desactivación lógica (DELETE /customers/{id}) | RF-6 | ✅ Completada |
 | T-09 | Reactivación (PATCH /customers/{id}/reactivate) | RF-7 | ⬜ Pendiente |
 | T-10 | Endpoint de validación (GET /customers/{id}/validate) | RF-8 | ⬜ Pendiente |
 | T-11 | Revisión final, casos límite y criterios de finalización | CF-1 a CF-10 | ⬜ Pendiente |
@@ -213,5 +213,5 @@
 
 ## Tarea Actual
 
-> 🔵 **Siguiente: T-08 — Desactivación lógica (DELETE /customers/{id})**  
-> T-07 completada y verificada (13/13 tests T-07, suite acumulada 68/68). Esperando aprobación para iniciar T-08.
+> 🔵 **Siguiente: T-09 — Reactivación (PATCH /customers/{id}/reactivate)**  
+> T-08 completada y verificada (8/8 tests T-08, suite acumulada 76/76). Esperando aprobación para iniciar T-09.
