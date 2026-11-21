@@ -115,3 +115,30 @@ def create_customer(
     db.refresh(new_customer)
     logger.info("Cliente creado exitosamente con ID: %s", new_customer.id)
     return new_customer
+
+
+@app.get(
+    "/customers/{customer_id}",
+    response_model=CustomerResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Clientes"],
+    summary="Consultar cliente por ID",
+    description="Retorna la información completa de un cliente por su identificador único.",
+)
+def get_customer(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Consulta un cliente por su ID.
+    Retorna HTTP 404 si el cliente no existe.
+    """
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        logger.warning("Cliente no encontrado con ID: %s", customer_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+    return customer

@@ -17,7 +17,7 @@
 | T-02 | Modelo de datos y BD (SQLite + seed) | RF-1 | ✅ Completada |
 | T-03 | Autenticación X-API-Key + /health | RF-9, RF-10 | ✅ Completada |
 | T-04 | Crear cliente (POST /customers) | RF-2 | ✅ Completada |
-| T-05 | Consulta por ID (GET /customers/{id}) | RF-3 | ⬜ Pendiente |
+| T-05 | Consulta por ID (GET /customers/{id}) | RF-3 | ✅ Completada |
 | T-06 | Listado paginado (GET /customers) | RF-4 | ⬜ Pendiente |
 | T-07 | Actualización parcial (PATCH /customers/{id}) | RF-5 | ⬜ Pendiente |
 | T-08 | Desactivación lógica (DELETE /customers/{id}) | RF-6 | ⬜ Pendiente |
@@ -213,5 +213,5 @@
 
 ## Tarea Actual
 
-> 🔵 **Siguiente: T-05 — Consulta por ID (GET /customers/{id})**  
-> T-04 completada y verificada (10/10 tests T-04, suite acumulada 38/38). Esperando aprobación para iniciar T-05.
+> 🔵 **Siguiente: T-06 — Listado paginado (GET /customers)**  
+> T-05 completada y verificada (7/7 tests T-05, suite acumulada 45/45). Esperando aprobación para iniciar T-06.
