@@ -1,9 +1,19 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 0 — Harness Engineering + Constitución SDD ✅ COMPLETADA
-- **Último commit**: pendiente (esperando revisión y primer commit del desarrollador)
+- **Fase**: 1 — servicio-clientes, implementación en curso
+- **Tarea completada**: T-01 — Estructura base ✅ (verificada 2026-11-20)
+- **Siguiente tarea**: T-02 — Modelo de datos y BD (SQLite + seed) — pendiente de aprobación
 - **Fecha de inicio**: 2026-11-19
+
+## Decisiones Técnicas T-01
+| Decisión | Valor |
+|---|---|
+| `requirements.txt` / `.env` | Compartidos en raíz; NO duplicar por servicio |
+| Carga de `.env` | `find_dotenv()` desde `config.py` (sube por árbol de dirs) |
+| `clientes.db` | Vive en `servicio-clientes/` (ruta absoluta via `Path(__file__).parent`) |
+| Test client | `httpx2.ASGITransport` (Starlette 1.10 requiere `httpx2`, no `httpx`) |
+| `sqlalchemy` | Instalado en venv (v2.1.9); disponible para T-02 |
 
 ## Decisiones Arquitectónicas (y por qué)
 | Decisión | Justificación |
@@ -23,9 +33,17 @@
 - No hardcodear `localhost:800X`; siempre leer desde variables de entorno.
 - Correr `pytest` antes de marcar cualquier tarea como completada.
 
+## Decisiones de Spec — servicio-clientes (aprobada 2026-11-20)
+| Decisión | Valor |
+|---|---|
+| Eliminación | Borrado lógico (`is_active=false`); reactivación por admin |
+| Validaciones | Flexible: correo con `@`, teléfono texto libre, zona sin enum |
+| Seed | Auto-seed 3–5 clientes al arranque si BD vacía |
+| Endpoint validación | 200 activo / 404 no existe / 409 inactivo |
+
 ## Próximos Pasos
 1. ⬜ Revisión y primer commit en GitHub (responsabilidad del desarrollador).
-2. ⬜ Fase 1: Crear `specs/001-servicio-clientes.md` y `tasks.md`.
-3. ⬜ Fase 2: Implementar `servicio-clientes` (TDD con pytest).
-4. ⬜ Fases 3-5: Implementar servicios de inventario, envíos y pedidos.
-5. ⬜ Fase 6: Implementar `cliente-web`.
+2. ✅ Fase 1 (Spec): `specs/001-servicio-clientes/spec.md` aprobada + `tasks.md` creado.
+3. 🔵 Fase 1 (Impl): T-01 — Estructura base de `servicio-clientes` (siguiente).
+4. ⬜ Fases 2-4: Implementar servicios de inventario, envíos y pedidos.
+5. ⬜ Fase 5: Implementar `cliente-web`.
