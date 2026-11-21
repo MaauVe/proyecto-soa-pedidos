@@ -21,6 +21,7 @@ from schemas import (
     CustomerListResponse,
     CustomerResponse,
     CustomerUpdate,
+    CustomerValidateResponse,
 )
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -190,6 +191,46 @@ def get_customer(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cliente no encontrado.",
         )
+    return customer
+
+
+@app.get(
+    "/customers/{customer_id}/validate",
+    response_model=CustomerValidateResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Clientes", "Integración"],
+    summary="Validar cliente para servicios externos",
+    description="Endpoint consumido por otros servicios (ej. servicio-pedidos) para validar si un cliente existe y se encuentra activo.",
+)
+def validate_customer(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Valida un cliente para operaciones inter-servicio.
+    - HTTP 200 si existe y está activo (retorna datos esenciales para entrega).
+    - HTTP 404 si el cliente no existe.
+    - HTTP 409 si el cliente existe pero está inactivo.
+    """
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        logger.warning("Validación fallida: cliente ID %s no existe.", customer_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+
+    if not customer.is_active:
+        logger.warning(
+            "Validación fallida: cliente ID %s existe pero está inactivo.",
+            customer_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El cliente existe pero se encuentra inactivo.",
+        )
+
     return customer
 
 

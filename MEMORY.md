@@ -2,11 +2,11 @@
 
 ## Estado Actual
 - **Fase**: 1 — servicio-clientes, implementación en curso
-- **Tarea completada**: T-09 ✅ — PATCH /reactivate (7/7 tests, suite 83/83, 2026-11-21)
-- **Siguiente tarea**: T-10 — GET /customers/{id}/validate — pendiente de aprobación
+- **Tarea completada**: T-10 ✅ — GET /validate (7/7 tests, suite 90/90, 2026-11-21)
+- **Siguiente tarea**: T-11 — Revisión final y cierre Fase 1 — pendiente de aprobación
 - **Fecha de inicio**: 2026-11-19
 
-## Decisión de Testing (CRÍTICA — aplicar en T-10 y T-11)
+## Decisión de Testing (CRÍTICA — aplicar en T-11)
 El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 - Handlers y dependencias FastAPI → declarar como `def` síncronos, no `async def`
 - Tests → llamar funciones directamente sin `asyncio.run` ni `TestClient`
@@ -19,7 +19,7 @@ El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 | `clientes.db` | En `servicio-clientes/` vía `Path(__file__).parent` |
 | Test client HTTP | Bloqueado en sandbox; usar llamadas directas y schemas |
 | SQLAlchemy | v2.1.9 síncrono; `SessionLocal` en `database.py` |
-| Endpoints completados | `/health`, `POST`, `GET /id`, `GET list`, `PATCH`, `DELETE`, `reactivate` |
+| Endpoints completados | `/health`, `POST`, `GET /id`, `GET list`, `PATCH`, `DELETE`, `reactivate`, `validate` |
 
 ## Decisiones de Spec — servicio-clientes (aprobada 2026-11-20)
 | Eliminación | Borrado lógico `is_active=false`; reactivación por admin |
@@ -43,7 +43,7 @@ El sandbox bloquea todo event loop async (asyncio, anyio) y conexiones TCP.
 
 ## Próximos Pasos
 1. ⬜ Commit en GitHub tras cada tarea (responsabilidad del desarrollador).
-2. 🔵 T-10: GET /customers/{id}/validate — validación para orquestador.
-3. ⬜ T-11: Revisión final y criterios de finalización.
-4. ⬜ Fases 2-4: Implementar servicios inventario, envíos, pedidos.
+2. 🔵 T-11: Revisión final, casos límite y criterios de finalización Fase 1.
+3. ⬜ Fase 2: Servicio de Inventario (spec y tareas).
+4. ⬜ Fases 3-4: Implementar servicios envíos, pedidos.
 5. ⬜ Fase 5: Implementar cliente-web.

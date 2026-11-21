@@ -130,3 +130,15 @@ class CustomerListResponse(BaseModel):
     page_size: int = Field(..., ge=1, le=100, description="Elementos por página")
     total_pages: int = Field(..., ge=0, description="Total de páginas disponibles")
 
+
+class CustomerValidateResponse(BaseModel):
+    """Esquema de respuesta para validación inter-servicio (GET /customers/{id}/validate)."""
+    id: int
+    full_name: str
+    coverage_zone: str
+    delivery_address: str
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
