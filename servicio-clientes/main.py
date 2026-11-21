@@ -297,3 +297,46 @@ def deactivate_customer(
     db.refresh(customer)
     logger.info("Cliente ID %s desactivado exitosamente (borrado lógico).", customer.id)
     return customer
+
+
+@app.patch(
+    "/customers/{customer_id}/reactivate",
+    response_model=CustomerResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Clientes"],
+    summary="Reactivar un cliente",
+    description="Reactiva un cliente previamente desactivado marcando is_active=true.",
+)
+def reactivate_customer(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Reactiva un cliente desactivado.
+    Retorna HTTP 404 si el cliente no existe.
+    Retorna HTTP 409 si el cliente ya se encuentra activo.
+    """
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        logger.warning("Cliente no encontrado con ID: %s", customer_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+
+    if customer.is_active:
+        logger.warning(
+            "Intento de reactivar cliente ya activo con ID: %s", customer_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El cliente ya se encuentra activo.",
+        )
+
+    customer.is_active = True
+    customer.updated_at = datetime.now(UTC).replace(tzinfo=None)
+    db.commit()
+    db.refresh(customer)
+    logger.info("Cliente ID %s reactivado exitosamente.", customer.id)
+    return customer
