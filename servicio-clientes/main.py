@@ -5,10 +5,15 @@ Gestión del catálogo de clientes del sistema SOA de pedidos y entregas.
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
+from auth import verify_api_key
 from config import LOG_LEVEL, PORT
-from database import init_db
+from database import get_db, init_db
+from models import Customer
+from schemas import CustomerCreate, CustomerResponse
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -51,7 +56,7 @@ app = FastAPI(
     summary="Verificación de salud del servicio",
     response_description="Estado operativo del servicio",
 )
-async def health_check():
+def health_check():
     """
     Retorna el estado de salud del servicio.
     Este endpoint no requiere autenticación.
@@ -63,3 +68,50 @@ async def health_check():
         "status": "ok",
         "port": PORT,
     }
+
+
+@app.post(
+    "/customers",
+    response_model=CustomerResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Clientes"],
+    summary="Crear un nuevo cliente",
+    description="Registra un cliente en el catálogo validando la unicidad del correo electrónico.",
+)
+def create_customer(
+    customer_in: CustomerCreate,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Registra un nuevo cliente con estado is_active=true.
+    Retorna HTTP 409 si el correo electrónico ya se encuentra registrado.
+    """
+    # Verificación de unicidad de correo (case-insensitive)
+    existing_customer = (
+        db.query(Customer)
+        .filter(func.lower(Customer.email) == customer_in.email.lower())
+        .first()
+    )
+    if existing_customer:
+        logger.warning(
+            "Intento de registro con correo duplicado: %s", customer_in.email
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe un cliente registrado con ese correo electrónico.",
+        )
+
+    new_customer = Customer(
+        full_name=customer_in.full_name,
+        email=customer_in.email,
+        phone=customer_in.phone,
+        delivery_address=customer_in.delivery_address,
+        coverage_zone=customer_in.coverage_zone,
+        is_active=True,
+    )
+    db.add(new_customer)
+    db.commit()
+    db.refresh(new_customer)
+    logger.info("Cliente creado exitosamente con ID: %s", new_customer.id)
+    return new_customer
