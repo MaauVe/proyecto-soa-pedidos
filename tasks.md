@@ -15,7 +15,7 @@
 |---|---|---|---|
 | T-01 | Estructura base del proyecto | — | ✅ Completada |
 | T-02 | Modelo de datos y BD (SQLite + seed) | RF-1 | ✅ Completada |
-| T-03 | Autenticación X-API-Key + /health | RF-9, RF-10 | ⬜ Pendiente |
+| T-03 | Autenticación X-API-Key + /health | RF-9, RF-10 | ✅ Completada |
 | T-04 | Crear cliente (POST /customers) | RF-2 | ⬜ Pendiente |
 | T-05 | Consulta por ID (GET /customers/{id}) | RF-3 | ⬜ Pendiente |
 | T-06 | Listado paginado (GET /customers) | RF-4 | ⬜ Pendiente |
@@ -213,5 +213,5 @@
 
 ## Tarea Actual
 
-> 🔵 **Siguiente: T-03 — Autenticación X-API-Key + /health**  
-> T-02 completada y verificada (9/9 pytest). Esperando aprobación para iniciar T-03.
+> 🔵 **Siguiente: T-04 — Crear cliente (POST /customers)**  
+> T-03 completada y verificada (19/19 pytest, suite acumulada 28/28). Esperando aprobación para iniciar T-04.
