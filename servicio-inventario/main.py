@@ -15,11 +15,17 @@ from auth import verify_api_key
 from config import LOG_LEVEL, PORT
 from database import get_db, init_db
 from schemas import (
+    CheckRequest,
+    CheckResponse,
     HealthResponse,
     ProductCreate,
     ProductListResponse,
     ProductResponse,
     ProductUpdate,
+    ReleaseRequest,
+    ReleaseResponse,
+    ReserveRequest,
+    ReserveResponse,
 )
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -379,3 +385,218 @@ def reactivate_product(
 
     logger.info("Producto ID %s reactivado exitosamente.", product_id)
     return _row_to_dict(updated)
+
+
+# ── Operaciones Atómicas de Stock (T-11 a T-13) ────────────────────────────────
+
+@app.post(
+    "/products/reserve",
+    response_model=ReserveResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Inventario"],
+    summary="Reserva atómica de stock",
+    description="Valida disponibilidad y descuenta stock atómicamente para una lista de productos. Si algún ítem falla, aplica rollback total y retorna HTTP 409.",
+)
+def reserve_stock(
+    reserve_in: ReserveRequest,
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Descuenta existencias para múltiples productos en una transacción única.
+    - Valida que todos los productos existan, estén activos y tengan stock suficiente.
+    - Si alguno falla, ningún producto se descuenta y retorna HTTP 409.
+    """
+    cursor = db.cursor()
+    errors = []
+    items_to_reserve = []
+
+    for item in reserve_in.items:
+        cursor.execute(
+            "SELECT id, name, unit_price, weight_kg, stock, is_active FROM products WHERE id = ?;",
+            (item.product_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            errors.append(f"El producto ID {item.product_id} no fue encontrado.")
+            continue
+
+        if row["is_active"] == 0:
+            errors.append(f"El producto ID {item.product_id} ({row['name']}) se encuentra inactivo.")
+            continue
+
+        if row["stock"] < item.quantity:
+            errors.append(
+                f"Stock insuficiente para el producto ID {item.product_id} ({row['name']}): "
+                f"solicitado {item.quantity}, disponible {row['stock']}."
+            )
+            continue
+
+        items_to_reserve.append({
+            "product_id": row["id"],
+            "name": row["name"],
+            "unit_price": row["unit_price"],
+            "weight_kg": row["weight_kg"],
+            "quantity_reserved": item.quantity,
+            "stock_remaining": row["stock"] - item.quantity,
+        })
+
+    if errors:
+        logger.warning("Fallo en reserva atómica de stock: %s", errors)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="; ".join(errors),
+        )
+
+    now_iso = datetime.now(UTC).isoformat()
+    with db:
+        for item in items_to_reserve:
+            db.execute(
+                "UPDATE products SET stock = ?, updated_at = ? WHERE id = ?;",
+                (item["stock_remaining"], now_iso, item["product_id"]),
+            )
+
+    logger.info("Reserva de stock exitosa para %d productos.", len(items_to_reserve))
+    return {"reserved": items_to_reserve}
+
+
+@app.post(
+    "/products/release",
+    response_model=ReleaseResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Inventario"],
+    summary="Liberación de stock",
+    description="Restaura unidades de stock para pedidos cancelados o fallidos. Aplica incluso a productos inactivos.",
+)
+def release_stock(
+    release_in: ReleaseRequest,
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Restaura existencias sumando las cantidades liberadas.
+    - Aplica incluso a productos inactivos.
+    - Si algún product_id no existe, retorna HTTP 404 sin modificar el resto.
+    """
+    cursor = db.cursor()
+    missing_ids = []
+    items_to_release = []
+
+    for item in release_in.items:
+        cursor.execute("SELECT id, stock FROM products WHERE id = ?;", (item.product_id,))
+        row = cursor.fetchone()
+        if not row:
+            missing_ids.append(item.product_id)
+            continue
+        new_stock = row["stock"] + item.quantity
+        items_to_release.append({
+            "product_id": row["id"],
+            "quantity_released": item.quantity,
+            "stock_after": new_stock,
+        })
+
+    if missing_ids:
+        logger.warning("Fallo al liberar stock: productos no encontrados: %s", missing_ids)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Producto(s) no encontrado(s): ID(s) {missing_ids}.",
+        )
+
+    now_iso = datetime.now(UTC).isoformat()
+    with db:
+        for item in items_to_release:
+            db.execute(
+                "UPDATE products SET stock = ?, updated_at = ? WHERE id = ?;",
+                (item["stock_after"], now_iso, item["product_id"]),
+            )
+
+    logger.info("Liberación de stock exitosa para %d productos.", len(items_to_release))
+    return {"released": items_to_release}
+
+
+@app.post(
+    "/products/check-availability",
+    response_model=CheckResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Inventario"],
+    summary="Consulta de disponibilidad sin descuento",
+    description="Verifica si uno o varios productos tienen stock suficiente y están activos sin modificar las existencias.",
+)
+def check_availability(
+    check_in: CheckRequest,
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Consulta informativa de disponibilidad de stock sin alterar existencias.
+    Retorna HTTP 200 siempre con all_available y detalle por ítem.
+    """
+    cursor = db.cursor()
+    all_available = True
+    results = []
+
+    for item in check_in.items:
+        cursor.execute(
+            "SELECT id, name, unit_price, weight_kg, stock, is_active FROM products WHERE id = ?;",
+            (item.product_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            all_available = False
+            results.append({
+                "product_id": item.product_id,
+                "name": None,
+                "unit_price": None,
+                "weight_kg": None,
+                "available": False,
+                "stock_current": None,
+                "quantity_requested": item.quantity,
+                "reason": f"Producto no encontrado (ID {item.product_id})",
+            })
+            continue
+
+        if row["is_active"] == 0:
+            all_available = False
+            results.append({
+                "product_id": row["id"],
+                "name": row["name"],
+                "unit_price": row["unit_price"],
+                "weight_kg": row["weight_kg"],
+                "available": False,
+                "stock_current": row["stock"],
+                "quantity_requested": item.quantity,
+                "reason": f"El producto ID {row['id']} se encuentra inactivo",
+            })
+            continue
+
+        if row["stock"] < item.quantity:
+            all_available = False
+            results.append({
+                "product_id": row["id"],
+                "name": row["name"],
+                "unit_price": row["unit_price"],
+                "weight_kg": row["weight_kg"],
+                "available": False,
+                "stock_current": row["stock"],
+                "quantity_requested": item.quantity,
+                "reason": (
+                    f"Stock insuficiente: solicitado {item.quantity}, disponible {row['stock']}"
+                ),
+            })
+            continue
+
+        results.append({
+            "product_id": row["id"],
+            "name": row["name"],
+            "unit_price": row["unit_price"],
+            "weight_kg": row["weight_kg"],
+            "available": True,
+            "stock_current": row["stock"],
+            "quantity_requested": item.quantity,
+            "reason": None,
+        })
+
+    return {
+        "all_available": all_available,
+        "results": results,
+    }

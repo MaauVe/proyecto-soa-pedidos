@@ -1,9 +1,9 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 2 — servicio-inventario 🔵 EN PROGRESO (Bloque 2 completado: 53/53 tests)
-- **Última acción**: T-05 a T-10 completadas ✅ (CRUD completo de productos, soft delete, reactivate)
-- **Siguiente tarea**: Bloque 3 — Operaciones de stock (T-11 a T-13)
+- **Fase**: 2 — servicio-inventario 🔵 EN PROGRESO (Bloque 3 completado: 79/79 tests)
+- **Última acción**: T-11 a T-13 completadas ✅ (Reserva atómica, release y check-availability)
+- **Siguiente tarea**: T-14 — Integración final y verificación de criterios CF-1 a CF-12
 - **Fecha inicio Fase 2**: 2026-11-21
 
 ## Decisiones Técnicas Consolidadas — servicio-inventario
@@ -31,6 +31,6 @@
 - Variables de entorno centralizadas sin credenciales en Git.
 
 ## Próximos Pasos
-1. ⬜ Bloque 3: Operaciones de stock (`T-11` a `T-13` en `tests/test_stock_ops.py`).
-2. ⬜ T-14: Integración final y verificación de criterios CF-1 a CF-12.
-3. ⬜ Commit en GitHub de Fase 2 completada (responsabilidad del desarrollador).
+1. ⬜ T-14: Integración final y verificación de criterios CF-1 a CF-12.
+2. ⬜ Commit en GitHub de Fase 2 completada (responsabilidad del desarrollador).
+3. ⬜ Fase 3: Spec + implementación de `servicio-envios` (puerto 8003).

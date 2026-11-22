@@ -20,9 +20,9 @@
 | T-08 | `PATCH /products/{id}` — Actualización parcial | ✅ Completada |
 | T-09 | `DELETE /products/{id}` — Desactivación lógica | ✅ Completada |
 | T-10 | `PATCH /products/{id}/reactivate` — Reactivación | ✅ Completada |
-| T-11 | `POST /products/reserve` — Reserva atómica | ⬜ Pendiente |
-| T-12 | `POST /products/release` — Liberación de stock | ⬜ Pendiente |
-| T-13 | `POST /products/check-availability` — Consulta sin descuento | ⬜ Pendiente |
+| T-11 | `POST /products/reserve` — Reserva atómica | ✅ Completada |
+| T-12 | `POST /products/release` — Liberación de stock | ✅ Completada |
+| T-13 | `POST /products/check-availability` — Consulta sin descuento | ✅ Completada |
 | T-14 | Integración final y criterios de finalización CF-1…CF-12 | ⬜ Pendiente |
 
 ---
@@ -250,7 +250,7 @@ servicio-inventario/
 
 ---
 
-## T-11 — `POST /products/reserve` — Reserva atómica de stock
+## T-11 — `POST /products/reserve` — Reserva atómica de stock ✅
 
 **RF cubiertos:** RF-8  
 **Objetivo:** Descontar stock de múltiples productos de forma atómica; rollback total ante cualquier falla. Incluye metadatos del producto en la respuesta exitosa y rechaza listas con `product_id` duplicados.
@@ -261,26 +261,26 @@ servicio-inventario/
 - **Response 409:** al menos un ítem falla — lista de errores por producto, **ningún** stock se modifica
 - **Response 422:** lista vacía, `quantity ≤ 0`, o `product_id` duplicados en la lista `items`
 
-**Pruebas a escribir en `tests/test_stock_ops.py`:**
-- [ ] Reserva de un solo producto con stock suficiente → HTTP 200, stock decrementado, incluye `name`, `unit_price`, `weight_kg`.
-- [ ] Reserva de múltiples productos, todos con stock → HTTP 200, todos decrementados.
-- [ ] Un producto sin stock suficiente → HTTP 409, **todos** los demás productos sin cambio de stock.
-- [ ] Un producto inactivo en la lista → HTTP 409, rollback total.
-- [ ] `product_id` inexistente en la lista → HTTP 409, rollback total.
-- [ ] Lista de ítems con `product_id` duplicados → HTTP 422.
-- [ ] Lista de ítems vacía `[]` → HTTP 422.
-- [ ] `quantity = 0` en un ítem → HTTP 422.
-- [ ] `quantity` negativa en un ítem → HTTP 422.
-- [ ] Reservar exactamente el stock disponible (stock = quantity) → HTTP 200, stock resultante = 0.
-- [ ] Reservar más del stock disponible (ej. stock=5, quantity=6) → HTTP 409 con mensaje indicando disponible vs. solicitado.
-- [ ] La respuesta de error 409 incluye qué producto falló y el motivo.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_stock_ops.py`:**
+- [x] Reserva de un solo producto con stock suficiente → HTTP 200, stock decrementado, incluye `name`, `unit_price`, `weight_kg`.
+- [x] Reserva de múltiples productos, todos con stock → HTTP 200, todos decrementados.
+- [x] Un producto sin stock suficiente → HTTP 409, **todos** los demás productos sin cambio de stock.
+- [x] Un producto inactivo en la lista → HTTP 409, rollback total.
+- [x] `product_id` inexistente en la lista → HTTP 409, rollback total.
+- [x] Lista de ítems con `product_id` duplicados → HTTP 422.
+- [x] Lista de ítems vacía `[]` → HTTP 422.
+- [x] `quantity = 0` en un ítem → HTTP 422.
+- [x] `quantity` negativa en un ítem → HTTP 422.
+- [x] Reservar exactamente el stock disponible (stock = quantity) → HTTP 200, stock resultante = 0.
+- [x] Reservar más del stock disponible (ej. stock=5, quantity=6) → HTTP 409 con mensaje indicando disponible vs. solicitado.
+- [x] La respuesta de error 409 incluye qué producto falló y el motivo.
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
 **Criterio de completado:** Tests pasan.
 
 ---
 
-## T-12 — `POST /products/release` — Liberación de stock
+## T-12 — `POST /products/release` — Liberación de stock ✅
 
 **RF cubiertos:** RF-9  
 **Objetivo:** Sumar stock a productos (incluidos inactivos) al cancelar un pedido.
@@ -291,22 +291,23 @@ servicio-inventario/
 - **Response 404:** algún `product_id` no existe — no se modifica ningún otro
 - **Response 422:** lista vacía, `quantity ≤ 0`
 
-**Pruebas a escribir en `tests/test_stock_ops.py`:**
-- [ ] Liberar stock de un producto activo → HTTP 200, stock incrementado correctamente.
-- [ ] Liberar stock de un producto **inactivo** → HTTP 200, stock incrementado igual.
-- [ ] Liberar stock de múltiples productos → HTTP 200, todos incrementados.
-- [ ] `product_id` inexistente → HTTP 404, ningún otro producto modificado.
-- [ ] Lista vacía `[]` → HTTP 422.
-- [ ] `quantity = 0` → HTTP 422.
-- [ ] `quantity` negativa → HTTP 422.
-- [ ] `updated_at` del producto se actualiza tras liberar stock.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_stock_ops.py`:**
+- [x] Liberar stock de un producto activo → HTTP 200, stock incrementado correctamente.
+- [x] Liberar stock de un producto **inactivo** → HTTP 200, stock incrementado igual.
+- [x] Liberar stock de múltiples productos → HTTP 200, todos incrementados.
+- [x] `product_id` inexistente → HTTP 404, ningún otro producto modificado.
+- [x] Lista con `product_id` duplicados → HTTP 422.
+- [x] Lista vacía `[]` → HTTP 422.
+- [x] `quantity = 0` → HTTP 422.
+- [x] `quantity` negativa → HTTP 422.
+- [x] `updated_at` del producto se actualiza tras liberar stock.
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
 **Criterio de completado:** Tests pasan.
 
 ---
 
-## T-13 — `POST /products/check-availability` — Consulta sin descuento
+## T-13 — `POST /products/check-availability` — Consulta sin descuento ✅
 
 **RF cubiertos:** RF-10  
 **Objetivo:** Verificar disponibilidad de múltiples productos sin modificar el stock. Incluye `name`, `unit_price`, `weight_kg` por ítem y valida duplicados en `items` con HTTP 422.
@@ -325,15 +326,15 @@ servicio-inventario/
   ```
 - **Response 422:** lista vacía, `quantity ≤ 0`, o `product_id` duplicados en `items`
 
-**Pruebas a escribir en `tests/test_stock_ops.py`:**
-- [ ] Todos los productos disponibles → HTTP 200 con `all_available: true`, incluye `name`, `unit_price`, `weight_kg`.
-- [ ] Al menos uno no disponible → HTTP 200 con `all_available: false` (no es error, es información).
-- [ ] Lista con `product_id` duplicados → HTTP 422.
-- [ ] Stock no se modifica después de la consulta (verificar con `GET /products/{id}`).
-- [ ] Producto inactivo → `available: false` con razón `"El producto se encuentra inactivo"`.
-- [ ] `product_id` inexistente → `available: false` con razón `"Producto no encontrado"`.
-- [ ] Lista vacía → HTTP 422.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_stock_ops.py`:**
+- [x] Todos los productos disponibles → HTTP 200 con `all_available: true`, incluye `name`, `unit_price`, `weight_kg`.
+- [x] Al menos uno no disponible → HTTP 200 con `all_available: false` (no es error, es información).
+- [x] Lista con `product_id` duplicados → HTTP 422.
+- [x] Stock no se modifica después de la consulta (verificar con `GET /products/{id}`).
+- [x] Producto inactivo → `available: false` con razón `"El producto se encuentra inactivo"`.
+- [x] `product_id` inexistente → `available: false` con razón `"Producto no encontrado"`.
+- [x] Lista vacía → HTTP 422.
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
 **Criterio de completado:** Tests pasan.
 
