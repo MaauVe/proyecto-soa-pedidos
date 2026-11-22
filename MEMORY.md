@@ -1,10 +1,10 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 2 — servicio-inventario 🔵 EN PROGRESO (Bloque 3 completado: 79/79 tests)
-- **Última acción**: T-11 a T-13 completadas ✅ (Reserva atómica, release y check-availability)
-- **Siguiente tarea**: T-14 — Integración final y verificación de criterios CF-1 a CF-12
-- **Fecha inicio Fase 2**: 2026-11-21
+- **Fase**: 2 — servicio-inventario ✅ COMPLETADA Y VERIFICADA (79/79 tests)
+- **Última tarea**: T-14 ✅ — Criterios de finalización CF-1 a CF-12 cumplidos
+- **Siguiente paso**: Fase 3 — Servicio de Envíos (puerto 8003, envios.db)
+- **Fecha de cierre Fase 2**: 2026-11-21
 
 ## Decisiones Técnicas Consolidadas — servicio-inventario
 | Decisión | Valor |
@@ -14,16 +14,8 @@
 | Handlers y Auth | Funciones síncronas `def`, `X-API-Key` obligatoria (salvo `/health`) |
 | Seed | 5 productos semilla automáticos (1 inactivo con stock 0) |
 | CRUD productos | Validación SKU insensible a mayúsculas, soft-delete y reactivación |
+| Operaciones stock | Transacciones atómicas SQLite (rollback total en reserva, release suma siempre) |
 | Pruebas consolidadas | 3 archivos: `test_base_auth.py`, `test_products_crud.py`, `test_stock_ops.py` |
-
-## Decisiones de Negocio — servicio-inventario
-| Decisión | Valor |
-|---|---|
-| Reserva fallida | Rollback total (HTTP 409, ningún stock modificado) |
-| Validaciones | `unit_price > 0`, `weight_kg > 0`, `stock >= 0`, sin `product_id` duplicados (422) |
-| Respuestas stock | Incluyen `name`, `unit_price`, `weight_kg` en 200 OK |
-| Desactivar con stock | Permitido; orquestador es responsable |
-| Release de inactivo | Siempre restaura stock (HTTP 200) |
 
 ## Decisiones Arquitectónicas
 - 4 servicios FastAPI independientes, bajo acoplamiento SOA.
@@ -31,6 +23,8 @@
 - Variables de entorno centralizadas sin credenciales en Git.
 
 ## Próximos Pasos
-1. ⬜ T-14: Integración final y verificación de criterios CF-1 a CF-12.
-2. ⬜ Commit en GitHub de Fase 2 completada (responsabilidad del desarrollador).
-3. ⬜ Fase 3: Spec + implementación de `servicio-envios` (puerto 8003).
+1. ⬜ Commit en GitHub de Fase 2 completada (responsabilidad del desarrollador).
+2. 🔵 Fase 3: Redacción y aprobación de `specs/003-servicio-envios/spec.md`.
+3. ⬜ Fase 3: Plan `tasks.md` e implementación TDD de `servicio-envios` (puerto 8003).
+4. ⬜ Fase 4: Spec + implementación de `servicio-pedidos` (orquestador, puerto 8004).
+5. ⬜ Fase 5: Implementación de `cliente-web`.

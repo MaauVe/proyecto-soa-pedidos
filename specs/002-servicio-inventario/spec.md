@@ -272,19 +272,19 @@ Los siguientes elementos quedan **explícitamente excluidos** de esta especifica
 
 La especificación se considera **implementada y verificada** cuando:
 
-- [ ] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-12), incluyendo los casos límite de la sección 7, y todas pasan.
-- [ ] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
-- [ ] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
-- [ ] **CF-4:** `POST /products` con SKU duplicado (cualquier combinación de mayúsculas) retorna HTTP 409.
-- [ ] **CF-5:** `POST /products/reserve` con al menos un producto sin stock retorna HTTP 409 y **ningún** stock se descuenta (verificado consultando el stock de todos los productos involucrados antes y después).
-- [ ] **CF-6:** `POST /products/release` sobre un producto inactivo restaura el stock y retorna HTTP 200.
-- [ ] **CF-7:** `DELETE /products/{id}` produce borrado lógico; el registro sigue consultable por `GET /products/{id}` con `is_active = false` y el stock no cambia.
-- [ ] **CF-8:** El servicio arranca sin errores con una BD nueva y carga automáticamente 4–5 productos semilla.
-- [ ] **CF-9:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
-- [ ] **CF-10:** Ninguna URL, puerto ni clave está hardcodeada en el código; todo proviene de variables de entorno.
-- [ ] **CF-11:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
-- [ ] **CF-12:** Las operaciones `/reserve` y `/release` están protegidas por transacción SQLite; una falla a mitad de la lista no deja el stock en estado inconsistente.
+- [x] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-12), incluyendo los casos límite de la sección 7, y todas pasan.
+- [x] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
+- [x] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
+- [x] **CF-4:** `POST /products` con SKU duplicado (cualquier combinación de mayúsculas) retorna HTTP 409.
+- [x] **CF-5:** `POST /products/reserve` con al menos un producto sin stock retorna HTTP 409 y **ningún** stock se descuenta (verificado consultando el stock de todos los productos involucrados antes y después).
+- [x] **CF-6:** `POST /products/release` sobre un producto inactivo restaura el stock y retorna HTTP 200.
+- [x] **CF-7:** `DELETE /products/{id}` produce borrado lógico; el registro sigue consultable por `GET /products/{id}` con `is_active = false` y el stock no cambia.
+- [x] **CF-8:** El servicio arranca sin errores con una BD nueva y carga automáticamente 4–5 productos semilla.
+- [x] **CF-9:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
+- [x] **CF-10:** Ninguna URL, puerto ni clave está hardcodeada en el código; todo proviene de variables de entorno.
+- [x] **CF-11:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
+- [x] **CF-12:** Las operaciones `/reserve` y `/release` están protegidas por transacción SQLite; una falla a mitad de la lista no deja el stock en estado inconsistente.
 
 ---
 
-*Fin de la especificación — Estado: **borrador**. Pendiente de revisión y aprobación antes de iniciar implementación.*
+*Fin de la especificación — Versión implementada y verificada satisfactoriamente (Fase 2 completada).*

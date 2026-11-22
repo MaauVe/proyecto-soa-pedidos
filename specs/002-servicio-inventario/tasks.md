@@ -23,7 +23,7 @@
 | T-11 | `POST /products/reserve` — Reserva atómica | ✅ Completada |
 | T-12 | `POST /products/release` — Liberación de stock | ✅ Completada |
 | T-13 | `POST /products/check-availability` — Consulta sin descuento | ✅ Completada |
-| T-14 | Integración final y criterios de finalización CF-1…CF-12 | ⬜ Pendiente |
+| T-14 | Integración final y criterios de finalización CF-1…CF-12 | ✅ Completada |
 
 ---
 
@@ -340,26 +340,26 @@ servicio-inventario/
 
 ---
 
-## T-14 — Integración final y criterios de finalización
+## T-14 — Integración final y criterios de finalización ✅
 
 **RF cubiertos:** CF-1 … CF-12  
 **Objetivo:** Verificar que todos los criterios de la spec están cumplidos como sistema integrado.
 
 **Checklist de verificación:**
-- [ ] **CF-1:** Suite completa de tests pasa (`pytest tests/ -v` sin fallos).
-- [ ] **CF-2:** `GET /health` → HTTP 200 sin `X-API-Key`.
-- [ ] **CF-3:** Todos los endpoints protegidos → HTTP 401 sin key o con key incorrecta.
-- [ ] **CF-4:** `POST /products` con SKU duplicado (cualquier case) → HTTP 409.
-- [ ] **CF-5:** `POST /products/reserve` con ítem sin stock → HTTP 409 y todos los demás stocks intactos.
-- [ ] **CF-6:** `POST /products/release` sobre producto inactivo → HTTP 200 y stock restaurado.
-- [ ] **CF-7:** `DELETE /products/{id}` → `is_active: false`, stock sin cambio, record consultable.
-- [ ] **CF-8:** Arranque con BD nueva → 4–5 productos semilla cargados automáticamente.
-- [ ] **CF-9:** `/docs` accesible y con todos los endpoints documentados.
-- [ ] **CF-10:** Ninguna URL/puerto/key hardcodeada; todo proviene de `.env`.
-- [ ] **CF-11:** Mensajes de error en español, identificadores en inglés (revisión manual).
-- [ ] **CF-12:** `/reserve` y `/release` con transacción SQLite — fallo a mitad no deja inconsistencias.
-- [ ] Actualizar `MEMORY.md` con la Fase 2 completada.
-- [ ] Reportar resultado al desarrollador y esperar aprobación antes de continuar.
+- [x] **CF-1:** Suite completa de tests pasa (`pytest tests/ -v` sin fallos: 79/79 pruebas aprobadas).
+- [x] **CF-2:** `GET /health` → HTTP 200 sin `X-API-Key`.
+- [x] **CF-3:** Todos los endpoints protegidos → HTTP 401 sin key o con key incorrecta.
+- [x] **CF-4:** `POST /products` con SKU duplicado (cualquier case) → HTTP 409.
+- [x] **CF-5:** `POST /products/reserve` con ítem sin stock → HTTP 409 y todos los demás stocks intactos.
+- [x] **CF-6:** `POST /products/release` sobre producto inactivo → HTTP 200 y stock restaurado.
+- [x] **CF-7:** `DELETE /products/{id}` → `is_active: false`, stock sin cambio, record consultable.
+- [x] **CF-8:** Arranque con BD nueva → 4–5 productos semilla cargados automáticamente.
+- [x] **CF-9:** `/docs` accesible y con todos los endpoints documentados.
+- [x] **CF-10:** Ninguna URL/puerto/key hardcodeada; todo proviene de `.env`.
+- [x] **CF-11:** Mensajes de error en español, identificadores en inglés (revisión manual).
+- [x] **CF-12:** `/reserve` y `/release` con transacción SQLite — fallo a mitad no deja inconsistencias.
+- [x] Actualizar `MEMORY.md` con la Fase 2 completada.
+- [x] Reportar resultado al desarrollador y esperar aprobación antes de continuar.
 
 **Criterio de completado:** Los 12 CFs verificados; todos los tests pasan; `MEMORY.md` actualizado.
 
