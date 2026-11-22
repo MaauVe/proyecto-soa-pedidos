@@ -1,10 +1,10 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 3 — servicio-envios ✅ COMPLETADA Y VERIFICADA (58/58 tests)
-- **Última tarea**: T-13 ✅ — Criterios de finalización CF-1 a CF-12 cumplidos
-- **Siguiente paso**: Fase 4 — Servicio de Pedidos (orquestador, puerto 8004, pedidos.db)
-- **Fecha de cierre Fase 3**: 2026-11-22
+- **Fase**: 4 — servicio-pedidos 🔄 EN PROGRESO (Bloque 1 completado: 21/21 tests ✅)
+- **Última tarea**: T-14, T-15, T-16 ✅ — Estructura, SQLite schema orders/order_items y Auth/Health
+- **Siguiente paso**: Bloque 2 — T-17 (clients.py httpx) y T-18 (POST /orders Saga)
+- **Fecha inicio Fase 4**: 2026-11-22
 
 ## Decisiones Técnicas Consolidadas — servicio-envios
 | Decisión | Valor |
@@ -22,8 +22,20 @@
 - SQLite aislado por servicio; comunicación exclusivamente HTTP REST con `httpx`.
 - Variables de entorno centralizadas sin credenciales en Git.
 
+## Decisiones Técnicas — servicio-pedidos
+| Decisión | Valor |
+|---|---|
+| Base de datos | SQLite nativo (sin ORM), `pedidos.db` en `servicio-pedidos/` |
+| Tablas | `orders` (11 cols) + `order_items` (7 cols) |
+| Estados de pedido | `PENDING → CONFIRMED`; terminales: `CANCELLED`, `FAILED` |
+| Cancelación | Solo si envío en `PENDING`; IN_TRANSIT/DELIVERED → 409 |
+| Saga fallida | Pedido queda `FAILED` + `compensation_error`; intervención manual |
+| Fallo envíos en GET | 200 degradado: `shipment_status: null` + `shipment_detail` |
+| Semilla | Sin seed; `pedidos.db` arranca vacía; mocks en pytest |
+| Timeout HTTP | `HTTP_TIMEOUT_SECONDS` desde `.env` (default 10 s) |
+
 ## Próximos Pasos
-1. ⬜ Usuario: commit en GitHub de Fase 3 completada.
-2. ⬜ Fase 4: Redacción y aprobación de `specs/004-servicio-pedidos/spec.md`.
-3. ⬜ Fase 4: Plan `tasks.md` e implementación TDD de `servicio-pedidos` (puerto 8004).
-4. ⬜ Fase 5: Implementación de `cliente-web`.
+1. ⬜ T-17: Módulo `clients.py` con `httpx` (resiliencia y timeouts)
+2. ⬜ T-18: `POST /orders` — orquestación y Saga de compensación
+3. ⬜ T-19 a T-22: Consultas, cancelación y criterios de finalización
+4. ⬜ Fase 5: `cliente-web`
