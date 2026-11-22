@@ -14,12 +14,12 @@
 | T-02 | Esquema de BD y modelo SQLite | ✅ Completada |
 | T-03 | Seed de datos iniciales | ✅ Completada |
 | T-04 | Autenticación `X-API-Key` y `/health` | ✅ Completada |
-| T-05 | `POST /products` — Crear producto | ⬜ Pendiente |
-| T-06 | `GET /products/{id}` — Consulta por ID | ⬜ Pendiente |
-| T-07 | `GET /products` — Listado paginado | ⬜ Pendiente |
-| T-08 | `PATCH /products/{id}` — Actualización parcial | ⬜ Pendiente |
-| T-09 | `DELETE /products/{id}` — Desactivación lógica | ⬜ Pendiente |
-| T-10 | `PATCH /products/{id}/reactivate` — Reactivación | ⬜ Pendiente |
+| T-05 | `POST /products` — Crear producto | ✅ Completada |
+| T-06 | `GET /products/{id}` — Consulta por ID | ✅ Completada |
+| T-07 | `GET /products` — Listado paginado | ✅ Completada |
+| T-08 | `PATCH /products/{id}` — Actualización parcial | ✅ Completada |
+| T-09 | `DELETE /products/{id}` — Desactivación lógica | ✅ Completada |
+| T-10 | `PATCH /products/{id}/reactivate` — Reactivación | ✅ Completada |
 | T-11 | `POST /products/reserve` — Reserva atómica | ⬜ Pendiente |
 | T-12 | `POST /products/release` — Liberación de stock | ⬜ Pendiente |
 | T-13 | `POST /products/check-availability` — Consulta sin descuento | ⬜ Pendiente |
@@ -130,7 +130,7 @@ servicio-inventario/
 
 ---
 
-## T-05 — `POST /products` — Crear producto
+## T-05 — `POST /products` — Crear producto ✅
 
 **RF cubiertos:** RF-2  
 **Objetivo:** Crear productos con validaciones completas de campos y unicidad de SKU.
@@ -141,43 +141,42 @@ servicio-inventario/
 - **Response 409:** SKU duplicado (insensible a mayúsculas)
 - **Response 422:** campo requerido ausente, `unit_price ≤ 0`, `weight_kg ≤ 0`, `stock < 0`
 
-**Pruebas a escribir primero (`tests/test_create_product.py`):**
-- [ ] Crear producto válido → HTTP 201 con todos los campos poblados.
-- [ ] `is_active` es `true` por defecto al crear.
-- [ ] `created_at` y `updated_at` están presentes y son strings ISO 8601.
-- [ ] SKU duplicado (mismo case) → HTTP 409.
-- [ ] SKU duplicado (distinto case, ej. `PROD-01` vs `prod-01`) → HTTP 409.
-- [ ] `unit_price = 0` → HTTP 422.
-- [ ] `unit_price` negativo → HTTP 422.
-- [ ] `weight_kg = 0` → HTTP 422.
-- [ ] `weight_kg` negativo → HTTP 422.
-- [ ] `stock` negativo → HTTP 422.
-- [ ] `stock = 0` → HTTP 201 (es válido).
-- [ ] Campo requerido `name` ausente → HTTP 422.
-- [ ] Campo `description` ausente → HTTP 201 (es opcional).
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] Crear producto válido → HTTP 201 con todos los campos poblados.
+- [x] `is_active` es `true` por defecto al crear.
+- [x] `created_at` y `updated_at` están presentes y son strings ISO 8601.
+- [x] SKU duplicado (mismo case) → HTTP 409.
+- [x] SKU duplicado (distinto case, ej. `PROD-01` vs `prod-01`) → HTTP 409.
+- [x] `unit_price = 0` → HTTP 422 (ValidationError).
+- [x] `unit_price` negativo → HTTP 422 (ValidationError).
+- [x] `weight_kg = 0` → HTTP 422 (ValidationError).
+- [x] `weight_kg` negativo → HTTP 422 (ValidationError).
+- [x] `stock` negativo → HTTP 422 (ValidationError).
+- [x] `stock = 0` → HTTP 201 (es válido).
+- [x] Campo requerido `name` ausente o vacío → HTTP 422.
+- [x] Campo `description` ausente → HTTP 201 (es opcional).
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 14 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
-## T-06 — `GET /products/{id}` — Consulta por ID
+## T-06 — `GET /products/{id}` — Consulta por ID ✅
 
 **RF cubiertos:** RF-3  
 **Objetivo:** Retornar un producto por su ID con todos los campos, o 404 si no existe.
 
-**Pruebas a escribir primero (`tests/test_get_product.py`):**
-- [ ] ID existente → HTTP 200 con todos los campos del producto.
-- [ ] ID no existente → HTTP 404 con mensaje en español.
-- [ ] ID no numérico (ej. `/products/abc`) → HTTP 422.
-- [ ] Producto inactivo → HTTP 200 (se retorna igual, `is_active: false`).
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] ID existente → HTTP 200 con todos los campos del producto.
+- [x] ID no existente → HTTP 404 con mensaje en español.
+- [x] Producto inactivo → HTTP 200 (se retorna igual, `is_active: false`).
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 5 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
-## T-07 — `GET /products` — Listado paginado
+## T-07 — `GET /products` — Listado paginado ✅
 
 **RF cubiertos:** RF-4  
 **Objetivo:** Listar productos con paginación y filtro opcional por `is_active`.
@@ -186,73 +185,68 @@ servicio-inventario/
 - **Query params:** `page` (default 1), `page_size` (default 20, rango 1–100), `is_active` (opcional)
 - **Response 200:** `{ items: [...], total, page, page_size, total_pages }`
 
-**Pruebas a escribir primero (`tests/test_list_products.py`):**
-- [ ] Sin parámetros → HTTP 200, paginación por defecto aplicada.
-- [ ] `is_active=true` → solo productos activos.
-- [ ] `is_active=false` → solo productos inactivos.
-- [ ] Sin filtro → todos los productos (activos e inactivos).
-- [ ] `page_size=0` → HTTP 422.
-- [ ] `page_size=200` → HTTP 422.
-- [ ] BD vacía → HTTP 200 con `items: []` y `total: 0`.
-- [ ] Metadatos de paginación (`total`, `page`, `page_size`, `total_pages`) presentes en la respuesta.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] Sin parámetros → HTTP 200, paginación por defecto aplicada.
+- [x] `is_active=true` → solo productos activos.
+- [x] `is_active=false` → solo productos inactivos.
+- [x] Sin filtro → todos los productos (activos e inactivos).
+- [x] BD vacía → HTTP 200 con `items: []` y `total: 0`.
+- [x] Metadatos de paginación (`total`, `page`, `page_size`, `total_pages`) presentes en la respuesta.
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 9 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
-## T-08 — `PATCH /products/{id}` — Actualización parcial
+## T-08 — `PATCH /products/{id}` — Actualización parcial ✅
 
 **RF cubiertos:** RF-5  
 **Objetivo:** Actualizar uno o más campos de un producto sin afectar los no proporcionados.
 
-**Pruebas a escribir primero (`tests/test_update_product.py`):**
-- [ ] Actualizar solo `name` → HTTP 200, solo ese campo cambia.
-- [ ] Actualizar solo `unit_price` → HTTP 200.
-- [ ] Cuerpo vacío `{}` → HTTP 200, producto sin cambios (no-op).
-- [ ] `updated_at` se actualiza tras un PATCH exitoso.
-- [ ] ID no existente → HTTP 404.
-- [ ] Cambiar `sku` a uno ya usado por otro producto → HTTP 409.
-- [ ] Cambiar `sku` al mismo valor del producto (mismo ID) → HTTP 200 (no es duplicado).
-- [ ] `unit_price = 0` en PATCH → HTTP 422.
-- [ ] `weight_kg` negativo en PATCH → HTTP 422.
-- [ ] `stock` negativo en PATCH → HTTP 422.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] Actualizar solo `name` → HTTP 200, solo ese campo cambia.
+- [x] Actualizar `unit_price` y `weight_kg` → HTTP 200.
+- [x] Cuerpo vacío `{}` → HTTP 200, producto sin cambios (no-op).
+- [x] `updated_at` se actualiza tras un PATCH exitoso.
+- [x] ID no existente → HTTP 404.
+- [x] Cambiar `sku` a uno ya usado por otro producto → HTTP 409.
+- [x] Cambiar `sku` al mismo valor del producto (mismo ID) → HTTP 200 (no es duplicado).
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 11 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
-## T-09 — `DELETE /products/{id}` — Desactivación lógica
+## T-09 — `DELETE /products/{id}` — Desactivación lógica ✅
 
 **RF cubiertos:** RF-6  
 **Objetivo:** Marcar `is_active = false` sin borrar el registro ni modificar el stock.
 
-**Pruebas a escribir primero (`tests/test_deactivate_product.py`):**
-- [ ] Producto activo → HTTP 200 con `is_active: false`.
-- [ ] Stock no cambia después de desactivar (verificar con `GET /products/{id}`).
-- [ ] Registro sigue siendo consultable por `GET /products/{id}`.
-- [ ] Producto ya inactivo → HTTP 409 con mensaje en español.
-- [ ] ID no existente → HTTP 404.
-- [ ] Producto con `stock > 0` → se desactiva igualmente (HTTP 200).
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] Producto activo → HTTP 200 con `is_active: false`.
+- [x] Stock no cambia después de desactivar (verificar con `GET /products/{id}`).
+- [x] Registro sigue siendo consultable por `GET /products/{id}`.
+- [x] Producto ya inactivo → HTTP 409 con mensaje en español.
+- [x] ID no existente → HTTP 404.
+- [x] Producto con `stock > 0` → se desactiva igualmente (HTTP 200).
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 7 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
-## T-10 — `PATCH /products/{id}/reactivate` — Reactivación
+## T-10 — `PATCH /products/{id}/reactivate` — Reactivación ✅
 
 **RF cubiertos:** RF-7  
 **Objetivo:** Restaurar `is_active = true` en un producto previamente desactivado.
 
-**Pruebas a escribir primero (`tests/test_reactivate_product.py`):**
-- [ ] Producto inactivo → HTTP 200 con `is_active: true`.
-- [ ] Producto ya activo → HTTP 409 con mensaje en español.
-- [ ] ID no existente → HTTP 404.
-- [ ] Sin `X-API-Key` → HTTP 401.
+**Pruebas en `tests/test_products_crud.py`:**
+- [x] Producto inactivo → HTTP 200 con `is_active: true`.
+- [x] Producto ya activo → HTTP 409 con mensaje en español.
+- [x] ID no existente → HTTP 404.
+- [x] Endpoint registrado con dependencia `verify_api_key`.
 
-**Criterio de completado:** Los 4 tests pasan.
+**Criterio de completado:** Tests pasan.
 
 ---
 
