@@ -16,8 +16,8 @@
 | T-14 | Estructura base del proyecto (`servicio-pedidos/`)                | —                               | ✅ Completada |
 | T-15 | Modelo de datos y BD (tablas `orders` + `order_items`)            | RF-3.4, RNF-7                   | ✅ Completada |
 | T-16 | Config, auth `X-API-Key` y `GET /health`                          | RF-1, RF-2, CF-1, CF-2          | ✅ Completada |
-| T-17 | Módulo `clients.py` — cliente HTTP `httpx` para 3 servicios       | RF-7, RNF-3, RNF-4              | ⬜ Pendiente |
-| T-18 | `POST /orders` — flujo completo + Saga de compensación            | RF-3 (3.1–3.8), CF-3–7          | ⬜ Pendiente |
+| T-17 | Módulo `clients.py` — cliente HTTP `httpx` para 3 servicios       | RF-7, RNF-3, RNF-4              | ✅ Completada |
+| T-18 | `POST /orders` — flujo completo + Saga de compensación            | RF-3 (3.1–3.8), CF-3–7          | ✅ Completada |
 | T-19 | `GET /orders/{id}` — detalle con estado de envío degradado        | RF-4, CF-8, CF-9                | ⬜ Pendiente |
 | T-20 | `GET /orders` — listado paginado con filtros                      | RF-5, CF-10                     | ⬜ Pendiente |
 | T-21 | `PATCH /orders/{id}/cancel` — cancelación con Saga                | RF-6, CF-11–13                  | ⬜ Pendiente |
@@ -101,7 +101,7 @@ servicio-pedidos/
 
 ### T-17 — Módulo `clients.py` — cliente HTTP `httpx`
 **RF cubiertos:** RF-3.1–3.3, RF-3.5–3.6, RF-7, RNF-3, RNF-4  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Encapsular todas las llamadas HTTP salientes en `clients.py`:
 
@@ -132,7 +132,7 @@ Todas las funciones capturan `httpx.ConnectError` y `httpx.TimeoutException` →
 
 ### T-18 — `POST /orders` — flujo completo + Saga
 **RF cubiertos:** RF-3 (3.1–3.8), RNF-7, CF-3–7  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Endpoint `POST /orders` con body `{ "customer_id": int, "items": [{"product_id": int, "quantity": int}] }`.
 

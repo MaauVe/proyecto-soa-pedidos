@@ -1,9 +1,9 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 4 — servicio-pedidos 🔄 EN PROGRESO (Bloque 1 completado: 21/21 tests ✅)
-- **Última tarea**: T-14, T-15, T-16 ✅ — Estructura, SQLite schema orders/order_items y Auth/Health
-- **Siguiente paso**: Bloque 2 — T-17 (clients.py httpx) y T-18 (POST /orders Saga)
+- **Fase**: 4 — servicio-pedidos 🔄 EN PROGRESO (Bloque 2 completado: 53/53 tests ✅)
+- **Última tarea**: T-17 y T-18 ✅ — clients.py (httpx) y POST /orders con Saga de compensación
+- **Siguiente paso**: Bloque 3 — T-19 (GET /orders/{id}), T-20 (GET /orders), T-21 (cancel) y T-22 (cierre)
 - **Fecha inicio Fase 4**: 2026-11-22
 
 ## Decisiones Técnicas Consolidadas — servicio-envios
@@ -35,7 +35,8 @@
 | Timeout HTTP | `HTTP_TIMEOUT_SECONDS` desde `.env` (default 10 s) |
 
 ## Próximos Pasos
-1. ⬜ T-17: Módulo `clients.py` con `httpx` (resiliencia y timeouts)
-2. ⬜ T-18: `POST /orders` — orquestación y Saga de compensación
-3. ⬜ T-19 a T-22: Consultas, cancelación y criterios de finalización
-4. ⬜ Fase 5: `cliente-web`
+1. ⬜ T-19: `GET /orders/{id}` — detalle con estado degradado de envío
+2. ⬜ T-20: `GET /orders` — listado paginado con filtros
+3. ⬜ T-21: `PATCH /orders/{id}/cancel` — cancelación con Saga
+4. ⬜ T-22: Revisión final y criterios CF-1 a CF-17
+5. ⬜ Fase 5: `cliente-web`
