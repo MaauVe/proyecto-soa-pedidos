@@ -1,9 +1,11 @@
 """
-Tests consolidados para T-08, T-09 y T-10 (Bloque 2) — servicio-envios.
-Cubre la creación, consulta y listado de envíos:
+Tests consolidados para T-08 a T-12 (Bloque 2 y 3) — servicio-envios.
+Cubre la creación, consulta, listado y máquina de estados de envíos:
 - T-08: POST /shipments — Creación de envíos y validaciones (RF-5).
 - T-09: GET /shipments/{id} — Consulta por ID (RF-6).
 - T-10: GET /shipments — Listado paginado y filtros por status y order_id (RF-7).
+- T-11: PATCH /shipments/{id}/status — Máquina de estados y transiciones (RF-8).
+- T-12: Casos límite y validaciones adicionales.
 """
 import inspect
 import sqlite3
@@ -13,8 +15,8 @@ from pydantic import ValidationError
 
 from auth import verify_api_key
 from database import get_connection
-from main import app, create_shipment, get_shipment, list_shipments
-from schemas import ShipmentCreate, StatusEnum, ZoneEnum
+from main import app, create_shipment, get_shipment, list_shipments, update_shipment_status
+from schemas import ShipmentCreate, StatusEnum, StatusUpdateRequest, ZoneEnum
 
 DUMMY_KEY = "test-key"
 
@@ -255,3 +257,207 @@ class TestListShipments:
         assert len(p2["items"]) == 2
         assert p2["page"] == 2
         assert p2["page_size"] == 3
+
+
+# ── T-11: PATCH /shipments/{id}/status ────────────────────────────────────────
+
+class TestUpdateShipmentStatus:
+    def test_update_status_route_requires_auth(self):
+        """PATCH /shipments/{id}/status exige verify_api_key."""
+        assert _route_requires_auth("/shipments/{id}/status", "PATCH")
+
+    def test_update_status_pending_to_in_transit_success(self, db_conn):
+        """Transición válida: PENDING -> IN_TRANSIT actualiza el estado a 200 OK."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1001, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1001"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+
+        update_req = StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT)
+        result = update_shipment_status(id=shipment_id, status_in=update_req, db=db_conn, _api_key=DUMMY_KEY)
+
+        assert result["id"] == shipment_id
+        assert result["status"] == "IN_TRANSIT"
+        assert result["updated_at"] is not None
+
+    def test_update_status_in_transit_to_delivered_success(self, db_conn):
+        """Transición válida: PENDING -> IN_TRANSIT -> DELIVERED."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1002, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1002"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+
+        # Avanzar a IN_TRANSIT
+        update_shipment_status(
+            id=shipment_id,
+            status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+
+        # Avanzar a DELIVERED
+        result = update_shipment_status(
+            id=shipment_id,
+            status_in=StatusUpdateRequest(new_status=StatusEnum.DELIVERED),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        assert result["status"] == "DELIVERED"
+
+    def test_update_status_pending_to_cancelled_success(self, db_conn):
+        """Transición válida: PENDING -> CANCELLED."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1003, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1003"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        result = update_shipment_status(
+            id=shipment["id"],
+            status_in=StatusUpdateRequest(new_status=StatusEnum.CANCELLED),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        assert result["status"] == "CANCELLED"
+
+    def test_update_status_in_transit_to_cancelled_success(self, db_conn):
+        """Transición válida: IN_TRANSIT -> CANCELLED."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1004, zone=ZoneEnum.REGIONAL, recipient_name="Destinatario 1004"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+
+        update_shipment_status(
+            id=shipment_id,
+            status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+
+        result = update_shipment_status(
+            id=shipment_id,
+            status_in=StatusUpdateRequest(new_status=StatusEnum.CANCELLED),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        assert result["status"] == "CANCELLED"
+
+    def test_update_status_pending_to_delivered_invalid_raises_409(self, db_conn):
+        """Transición inválida: PENDING -> DELIVERED (sin pasar por IN_TRANSIT) lanza HTTPException 409."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1005, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1005"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        with pytest.raises(HTTPException) as exc_info:
+            update_shipment_status(
+                id=shipment["id"],
+                status_in=StatusUpdateRequest(new_status=StatusEnum.DELIVERED),
+                db=db_conn,
+                _api_key=DUMMY_KEY,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "Transición no permitida" in exc_info.value.detail
+        assert "PENDING" in exc_info.value.detail
+        assert "DELIVERED" in exc_info.value.detail
+
+    def test_update_status_same_status_raises_409(self, db_conn):
+        """Intentar actualizar al mismo estado actual lanza HTTPException 409."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1006, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1006"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        with pytest.raises(HTTPException) as exc_info:
+            update_shipment_status(
+                id=shipment["id"],
+                status_in=StatusUpdateRequest(new_status=StatusEnum.PENDING),
+                db=db_conn,
+                _api_key=DUMMY_KEY,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "Transición no permitida" in exc_info.value.detail
+
+    def test_update_status_from_delivered_terminal_raises_409(self, db_conn):
+        """Envío en estado DELIVERED (terminal) rechaza cualquier cambio con HTTPException 409."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1007, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1007"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+        update_shipment_status(id=shipment_id, status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT), db=db_conn, _api_key=DUMMY_KEY)
+        update_shipment_status(id=shipment_id, status_in=StatusUpdateRequest(new_status=StatusEnum.DELIVERED), db=db_conn, _api_key=DUMMY_KEY)
+
+        with pytest.raises(HTTPException) as exc_info:
+            update_shipment_status(
+                id=shipment_id,
+                status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT),
+                db=db_conn,
+                _api_key=DUMMY_KEY,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "estado terminal" in exc_info.value.detail.lower()
+
+    def test_update_status_from_cancelled_terminal_raises_409(self, db_conn):
+        """Envío en estado CANCELLED (terminal) rechaza cualquier cambio con HTTPException 409."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1008, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1008"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+        update_shipment_status(id=shipment_id, status_in=StatusUpdateRequest(new_status=StatusEnum.CANCELLED), db=db_conn, _api_key=DUMMY_KEY)
+
+        with pytest.raises(HTTPException) as exc_info:
+            update_shipment_status(
+                id=shipment_id,
+                status_in=StatusUpdateRequest(new_status=StatusEnum.PENDING),
+                db=db_conn,
+                _api_key=DUMMY_KEY,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "estado terminal" in exc_info.value.detail.lower()
+
+    def test_update_status_non_existent_id_raises_404(self, db_conn):
+        """Actualizar el estado de un envío con ID inexistente lanza HTTPException 404."""
+        with pytest.raises(HTTPException) as exc_info:
+            update_shipment_status(
+                id=99999,
+                status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT),
+                db=db_conn,
+                _api_key=DUMMY_KEY,
+            )
+
+        assert exc_info.value.status_code == 404
+        assert "no encontrado" in exc_info.value.detail.lower()
+
+    def test_update_status_invalid_enum_raises_validation_error(self):
+        """Un estado no contemplado en StatusEnum lanza ValidationError."""
+        with pytest.raises(ValidationError):
+            StatusUpdateRequest(new_status="EN_CAMINO")
+
+    def test_update_status_modifies_updated_at(self, db_conn):
+        """Actualizar el estado actualiza updated_at."""
+        shipment = create_shipment(
+            shipment_in=ShipmentCreate(order_id=1009, zone=ZoneEnum.LOCAL, recipient_name="Destinatario 1009"),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        shipment_id = shipment["id"]
+        result = update_shipment_status(
+            id=shipment_id,
+            status_in=StatusUpdateRequest(new_status=StatusEnum.IN_TRANSIT),
+            db=db_conn,
+            _api_key=DUMMY_KEY,
+        )
+        assert result["updated_at"] >= result["created_at"]

@@ -231,18 +231,18 @@ Los siguientes elementos quedan **explícitamente excluidos** de esta especifica
 
 La especificación se considera **implementada y verificada** cuando:
 
-- [ ] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-10), incluyendo los casos límite de la sección 7, y todas pasan.
-- [ ] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
-- [ ] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
-- [ ] **CF-4:** `POST /quote` con zona inválida retorna HTTP 422 con mensaje en español.
-- [ ] **CF-5:** `POST /shipments` con `order_id` duplicado retorna HTTP 409 sin crear un segundo registro.
-- [ ] **CF-6:** `PATCH /shipments/{id}/status` con transición inválida retorna HTTP 409 indicando el estado actual y las transiciones permitidas.
-- [ ] **CF-7:** `PATCH /shipments/{id}/status` con transición válida actualiza el estado y retorna HTTP 200 con el recurso completo.
-- [ ] **CF-8:** Un envío en estado terminal (`DELIVERED` o `CANCELLED`) rechaza cualquier cambio de estado con HTTP 409.
-- [ ] **CF-9:** `GET /zones` retorna las tres zonas con sus tarifas leídas de `.env` y responde HTTP 200.
-- [ ] **CF-10:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
-- [ ] **CF-11:** Ninguna URL, puerto, clave ni tarifa está hardcodeada en el código; todo proviene de variables de entorno.
-- [ ] **CF-12:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
+- [x] **CF-1:** Existen pruebas `pytest` que cubren todos los requisitos funcionales (RF-1 a RF-10), incluyendo los casos límite de la sección 7, y todas pasan.
+- [x] **CF-2:** El endpoint `GET /health` responde HTTP 200 sin `X-API-Key`.
+- [x] **CF-3:** Todos los endpoints protegidos retornan HTTP 401 cuando se llaman sin `X-API-Key` o con clave incorrecta.
+- [x] **CF-4:** `POST /quote` con zona inválida retorna HTTP 422 con mensaje en español.
+- [x] **CF-5:** `POST /shipments` con `order_id` duplicado retorna HTTP 409 sin crear un segundo registro.
+- [x] **CF-6:** `PATCH /shipments/{id}/status` con transición inválida retorna HTTP 409 indicando el estado actual y las transiciones permitidas.
+- [x] **CF-7:** `PATCH /shipments/{id}/status` con transición válida actualiza el estado y retorna HTTP 200 con el recurso completo.
+- [x] **CF-8:** Un envío en estado terminal (`DELIVERED` o `CANCELLED`) rechaza cualquier cambio de estado con HTTP 409.
+- [x] **CF-9:** `GET /zones` retorna las tres zonas con sus tarifas leídas de `.env` y responde HTTP 200.
+- [x] **CF-10:** La documentación Swagger `/docs` está accesible y refleja todos los endpoints con sus respuestas documentadas.
+- [x] **CF-11:** Ninguna URL, puerto, clave ni tarifa está hardcodeada en el código; todo proviene de variables de entorno.
+- [x] **CF-12:** El código pasa revisión manual verificando que los mensajes de error estén en español y los identificadores en inglés.
 
 ---
 

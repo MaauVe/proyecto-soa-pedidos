@@ -182,8 +182,9 @@ Endpoint protegido. Retorna lista paginada de envíos con filtros opcionales por
 
 ## Bloque 3 — Máquina de estados y criterios de finalización
 
-### T-11 — `PATCH /shipments/{id}/status` — Actualización de estado
+### ✅ T-11 — `PATCH /shipments/{id}/status` — Actualización de estado
 **RF cubiertos:** RF-8
+**Estado:** ✅ Completada
 
 Implementar la máquina de estados con las 4 transiciones válidas y rechazo de las demás.
 
@@ -202,8 +203,9 @@ Implementar la máquina de estados con las 4 transiciones válidas y rechazo de 
 
 ---
 
-### T-12 — Casos límite y validaciones adicionales
+### ✅ T-12 — Casos límite y validaciones adicionales
 **RF cubiertos:** Sección 7 de la spec
+**Estado:** ✅ Completada
 
 **Pruebas distribuidas en ambos archivos de test:**
 - `GET /health` retorna `service` y `version` correctos.
@@ -215,23 +217,24 @@ Implementar la máquina de estados con las 4 transiciones válidas y rechazo de 
 
 ---
 
-### T-13 — Verificación de Criterios de Finalización (CF-1 a CF-12)
+### ✅ T-13 — Verificación de Criterios de Finalización (CF-1 a CF-12)
 **RF cubiertos:** Sección 9 de la spec
+**Estado:** ✅ Completada
 
 Recorrer la lista de CFs en `spec.md` y marcar cada uno como `[x]`:
 
-- [ ] CF-1: Todos los tests pasan (`pytest -q` sin fallos).
-- [ ] CF-2: `GET /health` → 200 sin `X-API-Key`.
-- [ ] CF-3: Todos los endpoints protegidos → 401 sin clave válida.
-- [ ] CF-4: `POST /quote` zona inválida → 422 con mensaje en español.
-- [ ] CF-5: `POST /shipments` `order_id` duplicado → 409.
-- [ ] CF-6: `PATCH` transición inválida → 409 con estado actual y transiciones válidas.
-- [ ] CF-7: `PATCH` transición válida → 200 con recurso actualizado completo.
-- [ ] CF-8: Envío en estado terminal → 409 ante cualquier cambio de estado.
-- [ ] CF-9: `GET /zones` → 200 con 3 zonas y tarifas de `.env`.
-- [ ] CF-10: `/docs` accesible y refleja todos los endpoints.
-- [ ] CF-11: Sin hardcoding; todo de `.env`.
-- [ ] CF-12: Mensajes de error en español, identificadores en inglés.
+- [x] CF-1: Todos los tests pasan (`pytest -q` sin fallos).
+- [x] CF-2: `GET /health` → 200 sin `X-API-Key`.
+- [x] CF-3: Todos los endpoints protegidos → 401 sin clave válida.
+- [x] CF-4: `POST /quote` zona inválida → 422 con mensaje en español.
+- [x] CF-5: `POST /shipments` `order_id` duplicado → 409.
+- [x] CF-6: `PATCH` transición inválida → 409 con estado actual y transiciones válidas.
+- [x] CF-7: `PATCH` transición válida → 200 con recurso actualizado completo.
+- [x] CF-8: Envío en estado terminal → 409 ante cualquier cambio de estado.
+- [x] CF-9: `GET /zones` → 200 con 3 zonas y tarifas de `.env`.
+- [x] CF-10: `/docs` accesible y refleja todos los endpoints.
+- [x] CF-11: Sin hardcoding; todo de `.env`.
+- [x] CF-12: Mensajes de error en español, identificadores en inglés.
 
 **🛑 PAUSA FINAL — Ejecutar `pytest servicio-envios/tests -q` para verificar que todos los tests pasen y esperar aprobación antes de hacer commit de Fase 3.**
 

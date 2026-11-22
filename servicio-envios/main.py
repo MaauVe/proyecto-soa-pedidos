@@ -21,6 +21,7 @@ from schemas import (
     ShipmentListResponse,
     ShipmentResponse,
     StatusEnum,
+    StatusUpdateRequest,
     ZoneEnum,
     ZoneInfo,
 )
@@ -33,7 +34,16 @@ logging.basicConfig(
 logger = logging.getLogger("servicio-envios")
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# ── Helpers y Máquina de Estados ──────────────────────────────────────────────
+ALLOWED_TRANSITIONS = {
+    StatusEnum.PENDING: [StatusEnum.IN_TRANSIT, StatusEnum.CANCELLED],
+    StatusEnum.IN_TRANSIT: [StatusEnum.DELIVERED, StatusEnum.CANCELLED],
+    StatusEnum.DELIVERED: [],
+    StatusEnum.CANCELLED: [],
+}
+TERMINAL_STATUSES = {StatusEnum.DELIVERED, StatusEnum.CANCELLED}
+
+
 def get_zone_rate(zone: ZoneEnum) -> float:
     """Retorna la tarifa configurada en variables de entorno para la zona especificada."""
     rates = {
@@ -256,3 +266,62 @@ def list_shipments(
         "page": actual_page,
         "page_size": actual_page_size,
     }
+
+
+@app.patch(
+    "/shipments/{id}/status",
+    response_model=ShipmentResponse,
+    tags=["Envíos"],
+    summary="Actualizar estado del envío",
+    description="Avanza el estado del envío según las transiciones permitidas por la máquina de estados.",
+)
+def update_shipment_status(
+    id: int = Path(..., ge=1, description="Identificador único del envío"),
+    status_in: StatusUpdateRequest = ...,
+    db: sqlite3.Connection = Depends(get_db),
+    _api_key: str = Depends(verify_api_key),
+) -> dict:
+    """Actualiza el estado de un envío validando las reglas de la máquina de estados."""
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM shipments WHERE id = ?;", (id,))
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Envío con ID {id} no encontrado.",
+        )
+
+    current_status = StatusEnum(row["status"])
+    new_status = status_in.new_status
+
+    if current_status in TERMINAL_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"El envío se encuentra en estado terminal '{current_status.value}' y no permite más cambios de estado.",
+        )
+
+    allowed = ALLOWED_TRANSITIONS.get(current_status, [])
+    if new_status not in allowed:
+        allowed_str = ", ".join(f"'{s.value}'" for s in allowed) if allowed else "ninguna"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Transición no permitida de '{current_status.value}' a '{new_status.value}'. "
+                f"Transiciones válidas desde '{current_status.value}': [{allowed_str}]."
+            ),
+        )
+
+    now = datetime.now(UTC).isoformat()
+    with db:
+        cursor.execute(
+            """
+            UPDATE shipments
+            SET status = ?, updated_at = ?
+            WHERE id = ?;
+            """,
+            (new_status.value, now, id),
+        )
+
+    cursor.execute("SELECT * FROM shipments WHERE id = ?;", (id,))
+    updated_row = cursor.fetchone()
+    return dict(updated_row)
