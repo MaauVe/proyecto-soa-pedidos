@@ -21,9 +21,9 @@
 | T-25 | Sección Clientes: listar, crear, desactivar, reactivar              | RF-4, CF-4, CF-5                | ✅ Completada  |
 | T-26 | Sección Inventario: listar, crear, editar                           | RF-5, CF-6, CF-7                | ✅ Completada  |
 | T-27 | Sección Pedidos: listar, crear, ver detalle, cancelar               | RF-6, CF-8–11                   | ✅ Completada  |
-| T-28 | Sección Envíos: listar, ver detalle, cambiar estado                 | RF-7, CF-12, CF-13              | ⬜ Pendiente   |
-| T-29 | Manejo de errores global y feedback visual (spinners)               | RF-8, CF-14, CF-15              | ⬜ Pendiente   |
-| T-30 | Verificación de Criterios de Finalización (CF-1 a CF-16)            | Todos los CF                    | ⬜ Pendiente   |
+| T-28 | Sección Envíos: listar, ver detalle, cambiar estado                 | RF-7, CF-12, CF-13              | ✅ Completada  |
+| T-29 | Manejo de errores global y feedback visual (spinners)               | RF-8, CF-14, CF-15              | ✅ Completada  |
+| T-30 | Verificación de Criterios de Finalización (CF-1 a CF-16)            | Todos los CF                    | ✅ Completada  |
 
 ---
 
@@ -173,7 +173,7 @@ En `app.js`, implementar:
 ### T-28 — Sección Envíos
 
 **RF cubiertos:** RF-7 (7.1–7.3), CF-12, CF-13  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 En la sección `#envios` de `index.html`, agregar:
 - Tabla de guías con columnas: ID, ID Pedido, Destinatario, Zona, Estado, Fecha, Acciones.
@@ -196,7 +196,7 @@ En `app.js`, implementar:
 ### T-29 — Manejo de errores global y feedback visual
 
 **RF cubiertos:** RF-8, CF-14, CF-15  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Revisar y completar en `app.js`:
 - `apiFetch()` captura errores de red (`catch`) y respuestas de error HTTP: extrae `detail` del JSON si está disponible, o usa mensajes genéricos en español.
@@ -212,26 +212,26 @@ Revisar y completar en `app.js`:
 ### T-30 — Verificación de Criterios de Finalización (CF-1 a CF-16)
 
 **RF cubiertos:** Sección 9 de la spec  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Recorrer la lista de CFs en `spec.md` y marcar cada uno:
 
-- [ ] CF-1:  `index.html` carga en el navegador sin errores en la consola.
-- [ ] CF-2:  La navegación entre las 5 secciones funciona sin recarga de página.
-- [ ] CF-3:  El Dashboard muestra el estado real de los 4 servicios.
-- [ ] CF-4:  La tabla de Clientes lista y el formulario de creación agrega uno nuevo.
-- [ ] CF-5:  Las acciones Desactivar y Reactivar funcionan y la tabla se actualiza.
-- [ ] CF-6:  La tabla de Inventario lista y el formulario de creación agrega un producto.
-- [ ] CF-7:  El formulario de edición pre-carga datos y guarda cambios con `PATCH`.
-- [ ] CF-8:  El formulario de nuevo pedido permite agregar y eliminar items dinámicamente.
-- [ ] CF-9:  `POST /orders` crea un pedido y la tabla se recarga.
-- [ ] CF-10: El detalle de pedido muestra items y estado de envío (o "No disponible temporalmente").
-- [ ] CF-11: La cancelación de un pedido funciona; errores 409 se muestran en español.
-- [ ] CF-12: La tabla de Envíos lista guías; el detalle muestra todos los campos.
-- [ ] CF-13: El cambio de estado funciona; guías terminales no muestran botón de cambio.
-- [ ] CF-14: Todos los errores HTTP muestran mensajes legibles en español en la UI.
-- [ ] CF-15: El indicador de carga se muestra y desaparece correctamente.
-- [ ] CF-16: Ninguna URL ni API Key está hardcodeada fuera de `config.js`.
+- [x] CF-1:  `index.html` carga en el navegador sin errores en la consola.
+- [x] CF-2:  La navegación entre las 5 secciones funciona sin recarga de página.
+- [x] CF-3:  El Dashboard muestra el estado real de los 4 servicios.
+- [x] CF-4:  La tabla de Clientes lista y el formulario de creación agrega uno nuevo.
+- [x] CF-5:  Las acciones Desactivar y Reactivar funcionan y la tabla se actualiza.
+- [x] CF-6:  La tabla de Inventario lista y el formulario de creación agrega un producto.
+- [x] CF-7:  El formulario de edición pre-carga datos y guarda cambios con `PATCH`.
+- [x] CF-8:  El formulario de nuevo pedido permite agregar y eliminar items dinámicamente.
+- [x] CF-9:  `POST /orders` crea un pedido y la tabla se recarga.
+- [x] CF-10: El detalle de pedido muestra items y estado de envío (o "No disponible temporalmente").
+- [x] CF-11: La cancelación de un pedido funciona; errores 409 se muestran en español.
+- [x] CF-12: La tabla de Envíos lista guías; el detalle muestra todos los campos.
+- [x] CF-13: El cambio de estado funciona; guías terminales no muestran botón de cambio.
+- [x] CF-14: Todos los errores HTTP muestran mensajes legibles en español en la UI.
+- [x] CF-15: El indicador de carga se muestra y desaparece correctamente.
+- [x] CF-16: Ninguna URL ni API Key está hardcodeada fuera de `config.js`.
 
 **🛑 PAUSA FINAL — Verificar todos los CFs manualmente en el navegador con los 4 servicios corriendo. Esperar aprobación antes de hacer commit de Fase 5.**
 

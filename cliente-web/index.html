@@ -410,14 +410,30 @@
       <div class="section-header">
         <div>
           <h2 class="section-title">Seguimiento de Envíos</h2>
-          <p class="section-desc">Guías de entrega generadas, estados de tránsito y entregas.</p>
+          <p class="section-desc">Guías de despacho, ciclo de entrega y tarifas de envío (servicio-envios :8003).</p>
         </div>
         <button id="btn-refresh-envios" class="btn btn-secondary">🔄 Actualizar Lista</button>
       </div>
-      <div id="envios-content">
-        <div class="empty-state">
-          <p>Preparado para Bloque 4 (T-28). El rastreo de guías de envío se gestionará aquí.</p>
-        </div>
+
+      <!-- Tabla de Envíos -->
+      <div class="table-container">
+        <table class="data-table" id="tabla-envios">
+          <thead>
+            <tr>
+              <th>Guía #</th>
+              <th>Pedido Asoc.</th>
+              <th>Destinatario</th>
+              <th>Zona</th>
+              <th>Costo Envío</th>
+              <th>Estado Envío</th>
+              <th>Fecha Creación</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="envios-tbody">
+            <tr><td colspan="8" class="empty-state">Cargando guías de envío...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

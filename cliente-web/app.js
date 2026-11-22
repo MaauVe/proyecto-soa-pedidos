@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initClientes();
   initInventario();
   initPedidos();
+  initEnvios();
 });
 
 // ── 1. NAVEGACIÓN SPA ─────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ function onTabActivated(tabName) {
       loadPedidos();
       break;
     case "envios":
-      // Bloque 4 (T-28)
+      loadEnvios();
       break;
   }
 }
@@ -1258,5 +1259,190 @@ async function cancelPedido(id) {
     loadPedidos();
   } catch (err) {
     showToast(`Error al cancelar pedido: ${err.message}`, "error");
+  }
+}
+
+// ── 8. SECCIÓN ENVÍOS (T-28) ──────────────────────────────────────────────────
+
+function initEnvios() {
+  const btnRefresh = document.getElementById("btn-refresh-envios");
+  if (btnRefresh) {
+    btnRefresh.addEventListener("click", () => {
+      loadEnvios();
+      showToast("Actualizando guías de envío...", "info");
+    });
+  }
+}
+
+async function loadEnvios() {
+  const tbody = document.getElementById("envios-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Cargando guías de envío...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${CONFIG.URL_ENVIOS}/shipments`);
+    const items = data && Array.isArray(data.items) ? data.items : [];
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No hay guías de envío registradas en el sistema.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items
+      .map((s) => {
+        const statusBadge = getShipmentStatusBadge(s.status);
+        const isTerminal = s.status === "DELIVERED" || s.status === "CANCELLED";
+
+        const changeStatusBtn = isTerminal
+          ? `<span style="color: var(--text-muted); font-size: 0.775rem;">Terminal</span>`
+          : `<button class="btn btn-sm btn-secondary" onclick="openChangeShipmentStatusModal(${s.id}, '${s.status}')">Cambiar Estado</button>`;
+
+        return `
+          <tr>
+            <td><strong>#${s.id}</strong></td>
+            <td><span class="sku-badge">Pedido #${s.order_id}</span></td>
+            <td>${escapeHtml(s.recipient_name)}</td>
+            <td><span class="badge" style="background:#e0e7ff; color:#3730a3;">${escapeHtml(s.zone)}</span></td>
+            <td><strong>$${s.shipping_cost.toFixed(2)}</strong></td>
+            <td>${statusBadge}</td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">${new Date(s.created_at).toLocaleString("es-MX")}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-sm btn-outline" onclick="showEnvioDetail(${s.id})">Ver</button>
+              ${changeStatusBtn}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color: var(--danger);">Error al cargar envíos: ${err.message}</td></tr>`;
+    showToast(`Error cargando envíos: ${err.message}`, "error");
+  }
+}
+
+function getShipmentStatusBadge(status) {
+  switch (status) {
+    case "PENDING":
+      return `<span class="badge badge-pending">PENDIENTE</span>`;
+    case "IN_TRANSIT":
+      return `<span class="badge badge-in_transit">EN TRÁNSITO</span>`;
+    case "DELIVERED":
+      return `<span class="badge badge-delivered">ENTREGADO</span>`;
+    case "CANCELLED":
+      return `<span class="badge badge-cancelled">CANCELADO</span>`;
+    default:
+      return `<span class="badge">${escapeHtml(status)}</span>`;
+  }
+}
+
+async function showEnvioDetail(id) {
+  try {
+    const s = await apiFetch(`${CONFIG.URL_ENVIOS}/shipments/${id}`);
+    const isTerminal = s.status === "DELIVERED" || s.status === "CANCELLED";
+    const changeBtn = isTerminal
+      ? ""
+      : `<button class="btn btn-primary" onclick="openChangeShipmentStatusModal(${s.id}, '${s.status}')">Cambiar Estado</button>`;
+
+    const content = `
+      <div class="detail-grid" style="margin-bottom: 1.5rem;">
+        <span class="detail-label">Guía #:</span>
+        <span class="detail-value"><strong>#${s.id}</strong></span>
+
+        <span class="detail-label">Pedido Asociado:</span>
+        <span class="detail-value"><span class="sku-badge">Pedido #${s.order_id}</span></span>
+
+        <span class="detail-label">Destinatario:</span>
+        <span class="detail-value"><strong>${escapeHtml(s.recipient_name)}</strong></span>
+
+        <span class="detail-label">Zona de Entrega:</span>
+        <span class="detail-value"><span class="badge" style="background:#e0e7ff; color:#3730a3;">${escapeHtml(s.zone)}</span></span>
+
+        <span class="detail-label">Tarifa de Envío:</span>
+        <span class="detail-value" style="font-size: 1.1rem; color: var(--primary); font-weight: 700;">$${s.shipping_cost.toFixed(2)}</span>
+
+        <span class="detail-label">Estado Actual:</span>
+        <span class="detail-value">${getShipmentStatusBadge(s.status)}</span>
+
+        <span class="detail-label">Fecha Creación:</span>
+        <span class="detail-value">${new Date(s.created_at).toLocaleString("es-MX")}</span>
+
+        <span class="detail-label">Última Modif.:</span>
+        <span class="detail-value">${new Date(s.updated_at).toLocaleString("es-MX")}</span>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+        ${changeBtn}
+      </div>
+    `;
+
+    openModal(`Detalle de Guía de Envío #${s.id}`, content);
+  } catch (err) {
+    showToast(`Error al consultar envío: ${err.message}`, "error");
+  }
+}
+
+function openChangeShipmentStatusModal(id, currentStatus) {
+  let optionsHtml = "";
+
+  if (currentStatus === "PENDING") {
+    optionsHtml = `
+      <option value="IN_TRANSIT">IN_TRANSIT (Poner en reparto / tránsito)</option>
+      <option value="CANCELLED">CANCELLED (Cancelar guía de envío)</option>
+    `;
+  } else if (currentStatus === "IN_TRANSIT") {
+    optionsHtml = `
+      <option value="DELIVERED">DELIVERED (Marcar como entregado con éxito)</option>
+      <option value="CANCELLED">CANCELLED (Cancelar guía de envío en ruta)</option>
+    `;
+  } else {
+    showToast("Esta guía ya se encuentra en un estado terminal y no admite cambios.", "warning");
+    return;
+  }
+
+  const content = `
+    <form id="form-change-status" onsubmit="handleChangeShipmentStatus(event, ${id})">
+      <div style="margin-bottom: 1.25rem;">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Estado actual de la guía #${id}: ${getShipmentStatusBadge(currentStatus)}
+        </p>
+        <label class="form-label">Seleccionar Nuevo Estado *</label>
+        <select id="shipment-new-status-select" class="form-select" required>
+          ${optionsHtml}
+        </select>
+        <small style="color: var(--text-muted); font-size: 0.775rem; display: block; margin-top: 0.35rem;">
+          Solo se permiten transiciones válidas según la máquina de estados del servicio de envíos.
+        </small>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-success">Confirmar Cambio</button>
+      </div>
+    </form>
+  `;
+
+  openModal(`Actualizar Estado — Guía #${id}`, content);
+}
+
+async function handleChangeShipmentStatus(e, id) {
+  e.preventDefault();
+  const select = document.getElementById("shipment-new-status-select");
+  const newStatus = select.value;
+
+  if (!newStatus) return;
+
+  try {
+    showToast(`Actualizando estado de la guía #${id}...`, "info");
+    await apiFetch(`${CONFIG.URL_ENVIOS}/shipments/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ new_status: newStatus })
+    });
+
+    showToast(`✅ Guía #${id} actualizada exitosamente a ${newStatus}.`, "success");
+    closeModal();
+    loadEnvios();
+  } catch (err) {
+    showToast(`Error al actualizar estado: ${err.message}`, "error");
   }
 }
