@@ -1,18 +1,18 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 5 — cliente-web (En progreso: Bloque 1 completado)
-- **Última tarea**: T-24 ✅ — Estructura base SPA y Dashboard de salud de microservicios
-- **Siguiente paso**: Bloque 2 — T-25 (Clientes) y T-26 (Inventario)
+- **Fase**: 5 — cliente-web (En progreso: Bloque 2 completado)
+- **Última tarea**: T-26 ✅ — Secciones Clientes e Inventario completadas y funcionales
+- **Siguiente paso**: Bloque 3 — T-27 (Pedidos: formulario con selectores, Saga y cancelación)
 - **Fecha**: 2026-11-22
 
 ## Decisiones Técnicas — cliente-web
 | Decisión | Valor |
 |---|---|
 | Arquitectura | Single-Page Application (SPA) pura (HTML5, CSS3, ES6+) |
-| Dependencias | Cero frameworks, sin npm, sin bundler; vanilla JS puro |
-| Configuración | `config.js` con `API_KEY` y URLs base de los 4 servicios |
-| CORS | `CORSMiddleware` habilitado en los 4 microservicios backend |
+| Clientes | Listado con badges, alta con zona, detalle modal, desactivar/reactivar |
+| Inventario | Listado con SKU/stock/peso, alta completa, edición modal, detalle |
+| Modales | Sistema de modal reutilizable con backdrop y tecla Escape |
 | Paginación | Consumo de `data.items` en endpoints paginados del backend |
 | Manejo errores | Captura HTTP + fallback español; toasts con auto-cierre 5s |
 
@@ -23,7 +23,6 @@
 - Backend verificado al 100% (301 tests pasando en total).
 
 ## Próximos Pasos (Fase 5)
-1. 🛑 Usuario: Probar Dashboard en navegador y commit en GitHub.
-2. ⬜ Bloque 2: T-25 (Clientes: CRUD + reactivación) y T-26 (Inventario: CRUD).
-3. ⬜ Bloque 3: T-27 (Pedidos: formulario orquestador + Saga + listado).
-4. ⬜ Bloque 4: T-28 a T-30 (Envíos + estados de entrega + verificación CFs).
+1. 🛑 Usuario: Probar Clientes e Inventario en navegador y commit en GitHub.
+2. ⬜ Bloque 3: T-27 (Pedidos: formulario orquestador + Saga + listado).
+3. ⬜ Bloque 4: T-28 a T-30 (Envíos + estados de entrega + verificación CFs).

@@ -202,14 +202,69 @@
       <div class="section-header">
         <div>
           <h2 class="section-title">Catálogo de Clientes</h2>
-          <p class="section-desc">Administración de clientes, direcciones y zonas de entrega.</p>
+          <p class="section-desc">Administración de clientes, direcciones y zonas de entrega (servicio-clientes :8001).</p>
         </div>
-        <button id="btn-refresh-clientes" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-toggle-cliente-form" class="btn btn-primary">➕ Nuevo Cliente</button>
+          <button id="btn-refresh-clientes" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        </div>
       </div>
-      <div id="clientes-content">
-        <div class="empty-state">
-          <p>Preparado para Bloque 2 (T-25). Los clientes se cargarán aquí.</p>
-        </div>
+
+      <!-- Formulario Crear Cliente (colapsable) -->
+      <div id="card-crear-cliente" class="form-card" style="display: none;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Registrar Nuevo Cliente</h3>
+        <form id="form-crear-cliente">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Nombre Completo *</label>
+              <input type="text" id="cli-full-name" class="form-input" placeholder="Ej. Ana García" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Correo Electrónico *</label>
+              <input type="email" id="cli-email" class="form-input" placeholder="ana@ejemplo.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono *</label>
+              <input type="text" id="cli-phone" class="form-input" placeholder="555-123-4567" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Zona de Cobertura *</label>
+              <select id="cli-zone" class="form-select" required>
+                <option value="LOCAL">LOCAL</option>
+                <option value="REGIONAL">REGIONAL</option>
+                <option value="NACIONAL">NACIONAL</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Dirección de Entrega Completa *</label>
+              <input type="text" id="cli-address" class="form-input" placeholder="Av. Insurgentes Sur 1234, CDMX" required />
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-cliente-form" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar Cliente</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de Clientes -->
+      <div class="table-container">
+        <table class="data-table" id="tabla-clientes">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Zona</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="clientes-tbody">
+            <tr><td colspan="7" class="empty-state">Cargando clientes...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -218,14 +273,70 @@
       <div class="section-header">
         <div>
           <h2 class="section-title">Control de Inventario</h2>
-          <p class="section-desc">Catálogo de productos, existencias disponibles y precios.</p>
+          <p class="section-desc">Catálogo de productos, existencias disponibles y pesos (servicio-inventario :8002).</p>
         </div>
-        <button id="btn-refresh-inventario" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-toggle-inventario-form" class="btn btn-primary">➕ Nuevo Producto</button>
+          <button id="btn-refresh-inventario" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        </div>
       </div>
-      <div id="inventario-content">
-        <div class="empty-state">
-          <p>Preparado para Bloque 2 (T-26). Los productos se cargarán aquí.</p>
-        </div>
+
+      <!-- Formulario Crear Producto (colapsable) -->
+      <div id="card-crear-producto" class="form-card" style="display: none;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Registrar Nuevo Producto</h3>
+        <form id="form-crear-producto">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">SKU (Código único) *</label>
+              <input type="text" id="prod-sku" class="form-input" placeholder="LAP-001" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nombre del Producto *</label>
+              <input type="text" id="prod-name" class="form-input" placeholder="Laptop Pro 15" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio Unitario ($) *</label>
+              <input type="number" id="prod-price" class="form-input" step="0.01" min="0.01" placeholder="15000.00" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Peso en Kg (para envío) *</label>
+              <input type="number" id="prod-weight" class="form-input" step="0.01" min="0.01" placeholder="2.10" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stock Inicial *</label>
+              <input type="number" id="prod-stock" class="form-input" min="0" placeholder="25" required />
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Descripción</label>
+              <textarea id="prod-desc" class="form-textarea" rows="2" placeholder="Especificaciones principales del producto..."></textarea>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-producto-form" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar Producto</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de Inventario -->
+      <div class="table-container">
+        <table class="data-table" id="tabla-inventario">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th>Precio Unit.</th>
+              <th>Stock</th>
+              <th>Peso</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventario-tbody">
+            <tr><td colspan="8" class="empty-state">Cargando inventario...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -265,6 +376,19 @@
 
   <!-- Contenedor para Alertas y Mensajes Toast -->
   <div id="toast-container"></div>
+
+  <!-- Modal Reutilizable -->
+  <div id="app-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title" class="modal-title">Título</h3>
+        <button id="modal-close-btn" class="modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body">
+        <!-- Contenido dinámico del modal -->
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="config.js"></script>

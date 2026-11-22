@@ -18,8 +18,8 @@
 |------|---------------------------------------------------------------------|---------------------------------|----------------|
 | T-23 | Estructura base: `index.html`, `config.js`, `styles.css`, `app.js` | RF-1, RF-2, RNF-1–4             | ✅ Completada  |
 | T-24 | Dashboard: estado de salud de los 4 servicios                       | RF-3, CF-3                      | ✅ Completada  |
-| T-25 | Sección Clientes: listar, crear, desactivar, reactivar              | RF-4, CF-4, CF-5                | ⬜ Pendiente   |
-| T-26 | Sección Inventario: listar, crear, editar                           | RF-5, CF-6, CF-7                | ⬜ Pendiente   |
+| T-25 | Sección Clientes: listar, crear, desactivar, reactivar              | RF-4, CF-4, CF-5                | ✅ Completada  |
+| T-26 | Sección Inventario: listar, crear, editar                           | RF-5, CF-6, CF-7                | ✅ Completada  |
 | T-27 | Sección Pedidos: listar, crear, ver detalle, cancelar               | RF-6, CF-8–11                   | ⬜ Pendiente   |
 | T-28 | Sección Envíos: listar, ver detalle, cambiar estado                 | RF-7, CF-12, CF-13              | ⬜ Pendiente   |
 | T-29 | Manejo de errores global y feedback visual (spinners)               | RF-8, CF-14, CF-15              | ⬜ Pendiente   |
@@ -98,7 +98,7 @@ En `app.js`, implementar:
 ### T-25 — Sección Clientes
 
 **RF cubiertos:** RF-4 (4.1–4.5), CF-4, CF-5  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 En la sección `#clientes` de `index.html`, agregar:
 - Tabla de clientes con columnas: ID, Nombre, Email, Zona, Estado, Acciones.
@@ -120,7 +120,7 @@ En `app.js`, implementar:
 ### T-26 — Sección Inventario
 
 **RF cubiertos:** RF-5 (5.1–5.3), CF-6, CF-7  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 En la sección `#inventario` de `index.html`, agregar:
 - Tabla de productos con columnas: ID, SKU, Nombre, Precio, Stock, Peso (kg), Estado, Acciones.
