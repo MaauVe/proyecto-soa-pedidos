@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiFlow SOA — Gestión de Pedidos y Entregas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Encabezado de la Aplicación -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-logo">📦</div>
+      <div>
+        <h1 class="brand-title">LogiFlow SOA</h1>
+        <p class="brand-subtitle">Sistema Empresarial de Pedidos y Entregas</p>
+      </div>
+    </div>
+    <div class="header-status">
+      <span class="api-badge">🔑 API Key: changeme-local-key</span>
+      <button id="btn-refresh-dashboard" class="btn btn-secondary">
+        🔄 Refrescar Estado
+      </button>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación por Pestañas (SPA) -->
+  <nav class="app-nav">
+    <button class="tab-btn active" data-tab="dashboard">
+      <span>📊</span> Dashboard
+    </button>
+    <button class="tab-btn" data-tab="clientes">
+      <span>👥</span> Clientes
+    </button>
+    <button class="tab-btn" data-tab="inventario">
+      <span>🏷️</span> Inventario
+    </button>
+    <button class="tab-btn" data-tab="pedidos">
+      <span>🛒</span> Pedidos
+    </button>
+    <button class="tab-btn" data-tab="envios">
+      <span>🚚</span> Envíos
+    </button>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+
+    <!-- SECCIÓN: DASHBOARD (Bloque 1) -->
+    <section id="section-dashboard" class="tab-content active">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Monitor de Microservicios</h2>
+          <p class="section-desc">Estado de conectividad y salud operativa de los 4 microservicios FastAPI.</p>
+        </div>
+        <button id="btn-check-all" class="btn btn-primary">
+          ⚡ Verificar Todos los Servicios
+        </button>
+      </div>
+
+      <!-- Banner de Estado Global -->
+      <div id="global-status" class="global-status-banner all-ok">
+        <div>
+          <strong id="global-status-title">Consultando microservicios...</strong>
+          <p id="global-status-desc" style="font-size: 0.85rem; margin-top: 0.2rem;">Por favor espere mientras se verifica cada endpoint de salud.</p>
+        </div>
+        <span id="global-status-time" style="font-size: 0.8rem; opacity: 0.85;">--:--:--</span>
+      </div>
+
+      <!-- Cuadrícula de Tarjetas de Servicios -->
+      <div class="dashboard-grid">
+        <!-- Servicio Clientes -->
+        <div id="card-clientes" class="service-card">
+          <div class="service-card-header">
+            <div>
+              <h3 class="service-name">Servicio Clientes</h3>
+              <span class="service-port">Puerto 8001</span>
+            </div>
+            <span class="service-status-badge status-badge-loading">
+              <span class="status-dot loading"></span> Verificando...
+            </span>
+          </div>
+          <div class="service-card-body">
+            <p><strong>Rol:</strong> Catálogo y validación de clientes</p>
+            <p><strong>BD:</strong> <code>clientes.db</code> (SQLite)</p>
+            <div class="service-card-meta">
+              <span class="card-version">Versión: --</span>
+              <span class="card-latency">Latencia: -- ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servicio Inventario -->
+        <div id="card-inventario" class="service-card">
+          <div class="service-card-header">
+            <div>
+              <h3 class="service-name">Servicio Inventario</h3>
+              <span class="service-port">Puerto 8002</span>
+            </div>
+            <span class="service-status-badge status-badge-loading">
+              <span class="status-dot loading"></span> Verificando...
+            </span>
+          </div>
+          <div class="service-card-body">
+            <p><strong>Rol:</strong> Stock, reserva atómica y liberación</p>
+            <p><strong>BD:</strong> <code>inventario.db</code> (SQLite)</p>
+            <div class="service-card-meta">
+              <span class="card-version">Versión: --</span>
+              <span class="card-latency">Latencia: -- ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servicio Envíos -->
+        <div id="card-envios" class="service-card">
+          <div class="service-card-header">
+            <div>
+              <h3 class="service-name">Servicio Envíos</h3>
+              <span class="service-port">Puerto 8003</span>
+            </div>
+            <span class="service-status-badge status-badge-loading">
+              <span class="status-dot loading"></span> Verificando...
+            </span>
+          </div>
+          <div class="service-card-body">
+            <p><strong>Rol:</strong> Tarifas zonales y guías de entrega</p>
+            <p><strong>BD:</strong> <code>envios.db</code> (SQLite)</p>
+            <div class="service-card-meta">
+              <span class="card-version">Versión: --</span>
+              <span class="card-latency">Latencia: -- ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servicio Pedidos (Orquestador) -->
+        <div id="card-pedidos" class="service-card">
+          <div class="service-card-header">
+            <div>
+              <h3 class="service-name">Servicio Pedidos</h3>
+              <span class="service-port">Puerto 8004</span>
+            </div>
+            <span class="service-status-badge status-badge-loading">
+              <span class="status-dot loading"></span> Verificando...
+            </span>
+          </div>
+          <div class="service-card-body">
+            <p><strong>Rol:</strong> Orquestador Saga de extremo a extremo</p>
+            <p><strong>BD:</strong> <code>pedidos.db</code> (SQLite)</p>
+            <div class="service-card-meta">
+              <span class="card-version">Versión: --</span>
+              <span class="card-latency">Latencia: -- ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Arquitectura SOA -->
+      <div class="arch-card">
+        <h3>📐 Arquitectura SOA del Sistema</h3>
+        <table class="arch-table">
+          <thead>
+            <tr>
+              <th>Microservicio</th>
+              <th>Puerto</th>
+              <th>Base de Datos</th>
+              <th>Aislamiento y Comunicación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>servicio-clientes</strong></td>
+              <td>8001</td>
+              <td><code>clientes.db</code></td>
+              <td>Autónomo. Valida clientes activos y zonas de entrega.</td>
+            </tr>
+            <tr>
+              <td><strong>servicio-inventario</strong></td>
+              <td>8002</td>
+              <td><code>inventario.db</code></td>
+              <td>Autónomo. Maneja stock, reservas atómicas y rollback de stock.</td>
+            </tr>
+            <tr>
+              <td><strong>servicio-envios</strong></td>
+              <td>8003</td>
+              <td><code>envios.db</code></td>
+              <td>Autónomo. Cotiza tarifas por zona y gestiona estados de entrega.</td>
+            </tr>
+            <tr>
+              <td><strong>servicio-pedidos</strong></td>
+              <td>8004</td>
+              <td><code>pedidos.db</code></td>
+              <td>Orquestador central HTTP (httpx). Coordina patrón Saga de pedidos.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: CLIENTES (Bloque 2) -->
+    <section id="section-clientes" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Catálogo de Clientes</h2>
+          <p class="section-desc">Administración de clientes, direcciones y zonas de entrega.</p>
+        </div>
+        <button id="btn-refresh-clientes" class="btn btn-secondary">🔄 Actualizar Lista</button>
+      </div>
+      <div id="clientes-content">
+        <div class="empty-state">
+          <p>Preparado para Bloque 2 (T-25). Los clientes se cargarán aquí.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: INVENTARIO (Bloque 2) -->
+    <section id="section-inventario" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Control de Inventario</h2>
+          <p class="section-desc">Catálogo de productos, existencias disponibles y precios.</p>
+        </div>
+        <button id="btn-refresh-inventario" class="btn btn-secondary">🔄 Actualizar Lista</button>
+      </div>
+      <div id="inventario-content">
+        <div class="empty-state">
+          <p>Preparado para Bloque 2 (T-26). Los productos se cargarán aquí.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: PEDIDOS (Bloque 3) -->
+    <section id="section-pedidos" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Gestión de Pedidos</h2>
+          <p class="section-desc">Creación coordinada de pedidos (Saga), consulta y cancelación.</p>
+        </div>
+        <button id="btn-refresh-pedidos" class="btn btn-secondary">🔄 Actualizar Lista</button>
+      </div>
+      <div id="pedidos-content">
+        <div class="empty-state">
+          <p>Preparado para Bloque 3 (T-27). La orquestación de pedidos se gestionará aquí.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: ENVÍOS (Bloque 4) -->
+    <section id="section-envios" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Seguimiento de Envíos</h2>
+          <p class="section-desc">Guías de entrega generadas, estados de tránsito y entregas.</p>
+        </div>
+        <button id="btn-refresh-envios" class="btn btn-secondary">🔄 Actualizar Lista</button>
+      </div>
+      <div id="envios-content">
+        <div class="empty-state">
+          <p>Preparado para Bloque 4 (T-28). El rastreo de guías de envío se gestionará aquí.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Contenedor para Alertas y Mensajes Toast -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

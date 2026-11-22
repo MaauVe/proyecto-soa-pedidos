@@ -1,40 +1,29 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 4 — servicio-pedidos ✅ COMPLETADA Y VERIFICADA (74/74 tests)
-- **Última tarea**: T-22 ✅ — Criterios de finalización CF-1 a CF-17 cumplidos
-- **Siguiente paso**: Fase 5 — cliente-web (Frontend HTML/CSS/JS puro)
-- **Fecha de cierre Fase 4**: 2026-11-22
+- **Fase**: 5 — cliente-web (En progreso: Bloque 1 completado)
+- **Última tarea**: T-24 ✅ — Estructura base SPA y Dashboard de salud de microservicios
+- **Siguiente paso**: Bloque 2 — T-25 (Clientes) y T-26 (Inventario)
+- **Fecha**: 2026-11-22
 
-## Decisiones Técnicas Consolidadas — servicio-envios
+## Decisiones Técnicas — cliente-web
 | Decisión | Valor |
 |---|---|
-| Base de datos | SQLite nativo en `servicio-envios/envios.db` (sin ORM externo) |
-| Configuración | `.env` raíz con `find_dotenv()`, puerto 8003 |
-| Tarifas de zonas | Planas desde `.env`: `RATE_LOCAL=50`, `RATE_REGIONAL=100`, `RATE_NACIONAL=200` |
-| Endpoints listos | `GET /health`, `GET /zones`, `POST /quote`, `POST /shipments`, `GET /shipments/{id}`, `GET /shipments`, `PATCH /shipments/{id}/status` |
-| Máquina de estados | `PENDING → IN_TRANSIT → DELIVERED` / `CANCELLED`; terminales rechazan cambios con 409 |
-| Autenticación | `X-API-Key` obligatoria (salvo `GET /health`), 401 si ausente/inválida |
-| Pruebas consolidadas | 2 archivos: `test_base_auth.py` (29) y `test_shipments.py` (29) = 58 tests |
+| Arquitectura | Single-Page Application (SPA) pura (HTML5, CSS3, ES6+) |
+| Dependencias | Cero frameworks, sin npm, sin bundler; vanilla JS puro |
+| Configuración | `config.js` con `API_KEY` y URLs base de los 4 servicios |
+| CORS | `CORSMiddleware` habilitado en los 4 microservicios backend |
+| Paginación | Consumo de `data.items` en endpoints paginados del backend |
+| Manejo errores | Captura HTTP + fallback español; toasts con auto-cierre 5s |
 
-## Decisiones Arquitectónicas
-- 4 servicios FastAPI independientes, bajo acoplamiento SOA.
-- SQLite aislado por servicio; comunicación exclusivamente HTTP REST con `httpx`.
-- Variables de entorno centralizadas sin credenciales en Git.
+## Decisiones Arquitectónicas Globales
+- 4 microservicios FastAPI independientes con SQLite aislada (puertos 8001-8004).
+- Comunicación inter-servicios exclusivamente HTTP REST (`httpx`) con `X-API-Key`.
+- Frontend consume los 4 microservicios directamente vía `fetch()` con CORS.
+- Backend verificado al 100% (301 tests pasando en total).
 
-## Decisiones Técnicas — servicio-pedidos
-| Decisión | Valor |
-|---|---|
-| Base de datos | SQLite nativo (sin ORM), `pedidos.db` en `servicio-pedidos/` |
-| Tablas | `orders` (11 cols) + `order_items` (7 cols) |
-| Estados de pedido | `PENDING → CONFIRMED`; terminales: `CANCELLED`, `FAILED` |
-| Cancelación | Solo si envío en `PENDING`; IN_TRANSIT/DELIVERED → 409 |
-| Saga fallida | Pedido queda `FAILED` + `compensation_error`; intervención manual |
-| Fallo envíos en GET | 200 degradado: `shipment_status: null` + `shipment_detail` |
-| Semilla | Sin seed; `pedidos.db` arranca vacía; mocks en pytest |
-| Timeout HTTP | `HTTP_TIMEOUT_SECONDS` desde `.env` (default 10 s) |
-
-## Próximos Pasos
-1. ⬜ Usuario: commit en GitHub de Fase 4 completada.
-2. ⬜ Fase 5: Redacción y aprobación de `specs/005-cliente-web/spec.md`.
-3. ⬜ Fase 5: Plan `tasks.md` e implementación de `cliente-web`.
+## Próximos Pasos (Fase 5)
+1. 🛑 Usuario: Probar Dashboard en navegador y commit en GitHub.
+2. ⬜ Bloque 2: T-25 (Clientes: CRUD + reactivación) y T-26 (Inventario: CRUD).
+3. ⬜ Bloque 3: T-27 (Pedidos: formulario orquestador + Saga + listado).
+4. ⬜ Bloque 4: T-28 a T-30 (Envíos + estados de entrega + verificación CFs).
