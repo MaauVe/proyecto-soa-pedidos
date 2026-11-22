@@ -18,10 +18,10 @@
 | T-16 | Config, auth `X-API-Key` y `GET /health`                          | RF-1, RF-2, CF-1, CF-2          | ✅ Completada |
 | T-17 | Módulo `clients.py` — cliente HTTP `httpx` para 3 servicios       | RF-7, RNF-3, RNF-4              | ✅ Completada |
 | T-18 | `POST /orders` — flujo completo + Saga de compensación            | RF-3 (3.1–3.8), CF-3–7          | ✅ Completada |
-| T-19 | `GET /orders/{id}` — detalle con estado de envío degradado        | RF-4, CF-8, CF-9                | ⬜ Pendiente |
-| T-20 | `GET /orders` — listado paginado con filtros                      | RF-5, CF-10                     | ⬜ Pendiente |
-| T-21 | `PATCH /orders/{id}/cancel` — cancelación con Saga                | RF-6, CF-11–13                  | ⬜ Pendiente |
-| T-22 | Revisión final y criterios de finalización (CF-1 a CF-17)         | Todos los CF                    | ⬜ Pendiente |
+| T-19 | `GET /orders/{id}` — detalle con estado de envío degradado        | RF-4, CF-8, CF-9                | ✅ Completada |
+| T-20 | `GET /orders` — listado paginado con filtros                      | RF-5, CF-10                     | ✅ Completada |
+| T-21 | `PATCH /orders/{id}/cancel` — cancelación con Saga                | RF-6, CF-11–13                  | ✅ Completada |
+| T-22 | Revisión final y criterios de finalización (CF-1 a CF-17)         | Todos los CF                    | ✅ Completada |
 
 ---
 
@@ -169,7 +169,7 @@ Secuencia de orquestación (5 pasos):
 
 ### T-19 — `GET /orders/{id}` — detalle con estado de envío degradado
 **RF cubiertos:** RF-4, CF-8, CF-9  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Endpoint que retorna el pedido completo con sus `items` y el estado actual del envío obtenido de `servicio-envios`. Si `servicio-envios` falla, responde 200 con `shipment_status: null` y `shipment_detail: "No disponible temporalmente"`.
 
@@ -187,7 +187,7 @@ Endpoint que retorna el pedido completo con sus `items` y el estado actual del e
 
 ### T-20 — `GET /orders` — listado paginado con filtros
 **RF cubiertos:** RF-5, CF-10  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Endpoint que lista pedidos solo desde `pedidos.db` (sin consultar servicios externos). Query params: `page` (≥1, default 1), `page_size` (1–100, default 20), `status` (opcional), `customer_id` (opcional). Responde con resumen de pedido por ítem (sin `order_items` ni bloque completo de envío).
 
@@ -206,7 +206,7 @@ Endpoint que lista pedidos solo desde `pedidos.db` (sin consultar servicios exte
 
 ### T-21 — `PATCH /orders/{id}/cancel` — cancelación con Saga
 **RF cubiertos:** RF-6, CF-11–13  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Endpoint que cancela un pedido activo. Verifica el estado del envío antes de proceder: solo cancela si el envío está en `PENDING`; rechaza con 409 si está en `IN_TRANSIT` o `DELIVERED`. Si el envío ya está `CANCELLED`, omite la llamada a `servicio-envios` y libera el stock directamente.
 
@@ -228,27 +228,27 @@ Endpoint que cancela un pedido activo. Verifica el estado del envío antes de pr
 
 ### T-22 — Verificación de Criterios de Finalización (CF-1 a CF-17)
 **RF cubiertos:** Sección 10 de la spec  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 Recorrer la lista de CFs en `spec.md` y marcar cada uno:
 
-- [ ] CF-1:  `GET /health` responde 200 sin `X-API-Key`.
-- [ ] CF-2:  Cualquier endpoint protegido sin `X-API-Key` válida responde 401.
-- [ ] CF-3:  `POST /orders` completa el flujo de 5 pasos y responde 201 con el pedido completo.
-- [ ] CF-4:  `POST /orders` con cliente inactivo/inexistente responde 422 sin reservar stock.
-- [ ] CF-5:  `POST /orders` con stock insuficiente responde 422 sin modificar pedidos.
-- [ ] CF-6:  `POST /orders` dispara compensación automática si falla `servicio-envios` tras reservar stock y responde 502.
-- [ ] CF-7:  Si la compensación también falla, el pedido queda con `status=FAILED` y `compensation_error` poblado.
-- [ ] CF-8:  `GET /orders/{id}` devuelve 404 para pedido inexistente.
-- [ ] CF-9:  `GET /orders/{id}` devuelve 200 con `shipment_status: null` cuando `servicio-envios` no responde.
-- [ ] CF-10: `GET /orders` lista pedidos con paginación y filtros `status` / `customer_id`.
-- [ ] CF-11: `PATCH /orders/{id}/cancel` cancela exitosamente un pedido con envío en `PENDING`.
-- [ ] CF-12: `PATCH /orders/{id}/cancel` rechaza con 409 si el envío está `IN_TRANSIT` o `DELIVERED`.
-- [ ] CF-13: `PATCH /orders/{id}/cancel` con envío ya `CANCELLED` libera el stock y actualiza el pedido localmente.
-- [ ] CF-14: Todos los errores de red (`ConnectError`, `TimeoutException`) se capturan y retornan 502 o 503.
-- [ ] CF-15: Ninguna URL, clave ni secreto está hardcodeado en el código fuente.
-- [ ] CF-16: La suite `pytest` cubre CF-1 a CF-15 con mocks de servicios externos.
-- [ ] CF-17: `GET /docs` y `GET /redoc` son accesibles con la aplicación corriendo.
+- [x] CF-1:  `GET /health` responde 200 sin `X-API-Key`.
+- [x] CF-2:  Cualquier endpoint protegido sin `X-API-Key` válida responde 401.
+- [x] CF-3:  `POST /orders` completa el flujo de 5 pasos y responde 201 con el pedido completo.
+- [x] CF-4:  `POST /orders` con cliente inactivo/inexistente responde 422 sin reservar stock.
+- [x] CF-5:  `POST /orders` con stock insuficiente responde 422 sin modificar pedidos.
+- [x] CF-6:  `POST /orders` dispara compensación automática si falla `servicio-envios` tras reservar stock y responde 502.
+- [x] CF-7:  Si la compensación también falla, el pedido queda con `status=FAILED` y `compensation_error` poblado.
+- [x] CF-8:  `GET /orders/{id}` devuelve 404 para pedido inexistente.
+- [x] CF-9:  `GET /orders/{id}` devuelve 200 con `shipment_status: null` cuando `servicio-envios` no responde.
+- [x] CF-10: `GET /orders` lista pedidos con paginación y filtros `status` / `customer_id`.
+- [x] CF-11: `PATCH /orders/{id}/cancel` cancela exitosamente un pedido con envío en `PENDING`.
+- [x] CF-12: `PATCH /orders/{id}/cancel` rechaza con 409 si el envío está `IN_TRANSIT` o `DELIVERED`.
+- [x] CF-13: `PATCH /orders/{id}/cancel` con envío ya `CANCELLED` libera el stock y actualiza el pedido localmente.
+- [x] CF-14: Todos los errores de red (`ConnectError`, `TimeoutException`) se capturan y retornan 502 o 503.
+- [x] CF-15: Ninguna URL, clave ni secreto está hardcodeado en el código fuente.
+- [x] CF-16: La suite `pytest` cubre CF-1 a CF-15 con mocks de servicios externos.
+- [x] CF-17: `GET /docs` y `GET /redoc` son accesibles con la aplicación corriendo.
 
 **🛑 PAUSA FINAL — Ejecutar `pytest servicio-pedidos/tests -q` para verificar que todos los tests pasen y esperar aprobación antes de hacer commit de Fase 4.**
 

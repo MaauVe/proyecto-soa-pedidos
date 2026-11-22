@@ -6,12 +6,13 @@ Coordina la creación, consulta y cancelación de pedidos integrando:
 - servicio-envios (8003)
 """
 import logging
+import math
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 
 import clients
 import config
@@ -20,8 +21,8 @@ from database import get_db, init_db
 from schemas import (
     HealthResponse,
     OrderCreate,
+    OrderListResponse,
     OrderResponse,
-    OrderItemResponse,
 )
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -267,7 +268,6 @@ def create_order(
             (shipment_id, confirmed_iso, order_id),
         )
 
-    # Recuperar pedido completo para responder
     cursor = db.cursor()
     cursor.execute("SELECT * FROM orders WHERE id = ?;", (order_id,))
     order_row = dict(cursor.fetchone())
@@ -281,3 +281,204 @@ def create_order(
 
     logger.info("Pedido ID %s confirmado exitosamente (Shipment ID: %s).", order_id, shipment_id)
     return order_row
+
+
+@app.get(
+    "/orders/{order_id}",
+    response_model=OrderResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Pedidos"],
+    summary="Consultar pedido por ID con estado de envío enriquecido",
+    description=(
+        "Retorna la información completa de un pedido con sus líneas. "
+        "Consulta el estado en tiempo real en servicio-envios. Si el servicio de envíos no responde, "
+        "retorna la respuesta degradada con shipment_status: null y aviso explicativo."
+    ),
+)
+def get_order(
+    order_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+) -> dict:
+    """Consulta un pedido por su ID con enriquecimiento de envío degradable."""
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM orders WHERE id = ?;", (order_id,))
+    row = cursor.fetchone()
+    if not row:
+        logger.warning("Pedido no encontrado con ID: %s", order_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido no encontrado.",
+        )
+
+    order_dict = dict(row)
+
+    cursor.execute("SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC;", (order_id,))
+    order_dict["items"] = [dict(r) for r in cursor.fetchall()]
+
+    shipment_id = order_dict.get("shipment_id")
+    if shipment_id:
+        shipment_data = clients.get_shipment(shipment_id)
+        if shipment_data:
+            order_dict["shipment_status"] = shipment_data.get("status")
+            order_dict["shipment_detail"] = None
+        else:
+            order_dict["shipment_status"] = None
+            order_dict["shipment_detail"] = "No disponible temporalmente"
+    else:
+        order_dict["shipment_status"] = None
+        order_dict["shipment_detail"] = None
+
+    return order_dict
+
+
+@app.get(
+    "/orders",
+    response_model=OrderListResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Pedidos"],
+    summary="Listado paginado de pedidos",
+    description="Retorna el listado paginado de pedidos persistidos en pedidos.db con filtros opcionales.",
+)
+def list_orders(
+    page: int = Query(default=1, ge=1, description="Número de página (>= 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Cantidad por página (1 a 100)"),
+    status: Optional[str] = Query(default=None, description="Filtrar por estado del pedido"),
+    customer_id: Optional[int] = Query(default=None, ge=1, description="Filtrar por cliente"),
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+) -> dict:
+    """Lista pedidos paginados con filtros opcionales."""
+    cursor = db.cursor()
+    where_clauses = []
+    params = []
+
+    if status:
+        where_clauses.append("status = ?")
+        params.append(status.upper())
+
+    if customer_id:
+        where_clauses.append("customer_id = ?")
+        params.append(customer_id)
+
+    where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+    cursor.execute(f"SELECT COUNT(*) AS total FROM orders {where_sql};", params)
+    total = cursor.fetchone()["total"]
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+
+    offset = (page - 1) * page_size
+    query = f"""
+        SELECT id, customer_id, customer_name, coverage_zone, status, total_amount,
+               shipment_id, created_at, updated_at
+        FROM orders
+        {where_sql}
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?;
+    """
+    cursor.execute(query, params + [page_size, offset])
+    items = [dict(r) for r in cursor.fetchall()]
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
+
+
+@app.patch(
+    "/orders/{order_id}/cancel",
+    response_model=OrderResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Pedidos"],
+    summary="Cancelar pedido activo",
+    description=(
+        "Cancela un pedido activo verificando el estado del envío en servicio-envios. "
+        "Si el envío está en PENDING, cancela el envío, libera el inventario y marca el pedido como CANCELLED. "
+        "Si está en IN_TRANSIT o DELIVERED, rechaza con 409."
+    ),
+)
+def cancel_order(
+    order_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+    _: str = Depends(verify_api_key),
+) -> dict:
+    """Cancela un pedido y libera el inventario si el envío no ha salido a reparto."""
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM orders WHERE id = ?;", (order_id,))
+    row = cursor.fetchone()
+    if not row:
+        logger.warning("Intento de cancelar pedido inexistente con ID: %s", order_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido no encontrado.",
+        )
+
+    order_dict = dict(row)
+    current_status = order_dict["status"]
+
+    if current_status in ("CANCELLED", "FAILED"):
+        logger.warning("Pedido %s ya se encuentra en estado terminal '%s'.", order_id, current_status)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El pedido no puede cancelarse porque ya está en estado terminal.",
+        )
+
+    shipment_id = order_dict.get("shipment_id")
+    # Obtener las líneas del pedido para liberar inventario
+    cursor.execute("SELECT product_id, quantity FROM order_items WHERE order_id = ?;", (order_id,))
+    items_to_release = [
+        {"product_id": r["product_id"], "quantity": r["quantity"]}
+        for r in cursor.fetchall()
+    ]
+
+    # Verificar estado del envío si shipment_id existe
+    if shipment_id:
+        shipment_data = clients.get_shipment(shipment_id)
+        if not shipment_data:
+            logger.error("No fue posible consultar el envío %s para cancelar pedido %s.", shipment_id, order_id)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="El servicio de envíos no está disponible.",
+            )
+
+        shipment_status = shipment_data.get("status")
+        if shipment_status in ("IN_TRANSIT", "DELIVERED"):
+            logger.warning("Cancelación rechazada para pedido %s: envío en estado '%s'.", order_id, shipment_status)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No se puede cancelar un pedido cuyo envío ya está en tránsito o entregado.",
+            )
+
+        if shipment_status == "PENDING":
+            clients.cancel_shipment(shipment_id)
+            logger.info("Envío %s cancelado en servicio-envios.", shipment_id)
+        elif shipment_status == "CANCELLED":
+            logger.info("Envío %s ya estaba cancelado previamente.", shipment_id)
+
+    # Liberar el stock reservado en servicio-inventario
+    if items_to_release:
+        clients.release_stock(items_to_release)
+        logger.info("Stock liberado exitosamente al cancelar pedido %s.", order_id)
+
+    # Actualizar estado local del pedido a CANCELLED
+    now_iso = datetime.now(UTC).isoformat()
+    with db:
+        db.execute(
+            "UPDATE orders SET status = 'CANCELLED', updated_at = ? WHERE id = ?;",
+            (now_iso, order_id),
+        )
+
+    # Retornar el pedido completo actualizado
+    cursor.execute("SELECT * FROM orders WHERE id = ?;", (order_id,))
+    updated_order = dict(cursor.fetchone())
+
+    cursor.execute("SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC;", (order_id,))
+    updated_order["items"] = [dict(r) for r in cursor.fetchall()]
+    updated_order["shipment_status"] = "CANCELLED" if shipment_id else None
+    updated_order["shipment_detail"] = None
+
+    logger.info("Pedido ID %s cancelado exitosamente.", order_id)
+    return updated_order

@@ -1,10 +1,10 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 4 — servicio-pedidos 🔄 EN PROGRESO (Bloque 2 completado: 53/53 tests ✅)
-- **Última tarea**: T-17 y T-18 ✅ — clients.py (httpx) y POST /orders con Saga de compensación
-- **Siguiente paso**: Bloque 3 — T-19 (GET /orders/{id}), T-20 (GET /orders), T-21 (cancel) y T-22 (cierre)
-- **Fecha inicio Fase 4**: 2026-11-22
+- **Fase**: 4 — servicio-pedidos ✅ COMPLETADA Y VERIFICADA (74/74 tests)
+- **Última tarea**: T-22 ✅ — Criterios de finalización CF-1 a CF-17 cumplidos
+- **Siguiente paso**: Fase 5 — cliente-web (Frontend HTML/CSS/JS puro)
+- **Fecha de cierre Fase 4**: 2026-11-22
 
 ## Decisiones Técnicas Consolidadas — servicio-envios
 | Decisión | Valor |
@@ -35,8 +35,6 @@
 | Timeout HTTP | `HTTP_TIMEOUT_SECONDS` desde `.env` (default 10 s) |
 
 ## Próximos Pasos
-1. ⬜ T-19: `GET /orders/{id}` — detalle con estado degradado de envío
-2. ⬜ T-20: `GET /orders` — listado paginado con filtros
-3. ⬜ T-21: `PATCH /orders/{id}/cancel` — cancelación con Saga
-4. ⬜ T-22: Revisión final y criterios CF-1 a CF-17
-5. ⬜ Fase 5: `cliente-web`
+1. ⬜ Usuario: commit en GitHub de Fase 4 completada.
+2. ⬜ Fase 5: Redacción y aprobación de `specs/005-cliente-web/spec.md`.
+3. ⬜ Fase 5: Plan `tasks.md` e implementación de `cliente-web`.
