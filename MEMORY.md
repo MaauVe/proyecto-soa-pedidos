@@ -1,9 +1,9 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 5 — cliente-web (En progreso: Bloque 2 completado)
-- **Última tarea**: T-26 ✅ — Secciones Clientes e Inventario completadas y funcionales
-- **Siguiente paso**: Bloque 3 — T-27 (Pedidos: formulario con selectores, Saga y cancelación)
+- **Fase**: 5 — cliente-web (En progreso: Bloque 3 completado)
+- **Última tarea**: T-27 ✅ — Sección Pedidos con Saga, items dinámicos y cancelación
+- **Siguiente paso**: Bloque 4 — T-28 a T-30 (Envíos, estados y verificación CFs)
 - **Fecha**: 2026-11-22
 
 ## Decisiones Técnicas — cliente-web
@@ -12,6 +12,7 @@
 | Arquitectura | Single-Page Application (SPA) pura (HTML5, CSS3, ES6+) |
 | Clientes | Listado con badges, alta con zona, detalle modal, desactivar/reactivar |
 | Inventario | Listado con SKU/stock/peso, alta completa, edición modal, detalle |
+| Pedidos | Formulario con items dinámicos, selectores dinámicos, Saga, detalle degradado |
 | Modales | Sistema de modal reutilizable con backdrop y tecla Escape |
 | Paginación | Consumo de `data.items` en endpoints paginados del backend |
 | Manejo errores | Captura HTTP + fallback español; toasts con auto-cierre 5s |
@@ -23,6 +24,6 @@
 - Backend verificado al 100% (301 tests pasando en total).
 
 ## Próximos Pasos (Fase 5)
-1. 🛑 Usuario: Probar Clientes e Inventario en navegador y commit en GitHub.
-2. ⬜ Bloque 3: T-27 (Pedidos: formulario orquestador + Saga + listado).
-3. ⬜ Bloque 4: T-28 a T-30 (Envíos + estados de entrega + verificación CFs).
+1. 🛑 Usuario: Probar Sección Pedidos en navegador y commit en GitHub.
+2. ⬜ Bloque 4: T-28 (Envíos: listar, detalle, transición de estados).
+3. ⬜ Bloque 4: T-29 y T-30 (Pulido final de feedback visual y verificación CF-1 a CF-16).

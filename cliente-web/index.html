@@ -345,14 +345,63 @@
       <div class="section-header">
         <div>
           <h2 class="section-title">Gestión de Pedidos</h2>
-          <p class="section-desc">Creación coordinada de pedidos (Saga), consulta y cancelación.</p>
+          <p class="section-desc">Orquestador de pedidos y compensación Saga (servicio-pedidos :8004).</p>
         </div>
-        <button id="btn-refresh-pedidos" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-toggle-pedido-form" class="btn btn-primary">➕ Nuevo Pedido</button>
+          <button id="btn-refresh-pedidos" class="btn btn-secondary">🔄 Actualizar Lista</button>
+        </div>
       </div>
-      <div id="pedidos-content">
-        <div class="empty-state">
-          <p>Preparado para Bloque 3 (T-27). La orquestación de pedidos se gestionará aquí.</p>
-        </div>
+
+      <!-- Formulario Crear Pedido (colapsable) -->
+      <div id="card-crear-pedido" class="form-card" style="display: none;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Orquestar Nuevo Pedido (Patrón Saga)</h3>
+        <form id="form-crear-pedido">
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label">Seleccionar Cliente Activo *</label>
+            <select id="pedido-customer-select" class="form-select" required>
+              <option value="">-- Cargando clientes activos... --</option>
+            </select>
+            <small style="color: var(--text-muted); font-size: 0.775rem;">Se validará automáticamente contra servicio-clientes (:8001) y determinará la tarifa de envío.</small>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <label class="form-label" style="margin: 0;">Productos del Pedido (Items) *</label>
+              <button type="button" id="btn-add-item-row" class="btn btn-sm btn-outline">➕ Agregar Producto</button>
+            </div>
+            
+            <div id="pedido-items-container" style="display: flex; flex-direction: column; gap: 0.65rem;">
+              <!-- Filas dinámicas de items añadidas por JS -->
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button type="button" id="btn-cancel-pedido-form" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" id="btn-submit-pedido" class="btn btn-success">⚡ Crear y Orquestar Pedido</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de Pedidos -->
+      <div class="table-container">
+        <table class="data-table" id="tabla-pedidos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Zona</th>
+              <th>Total ($)</th>
+              <th>Estado Pedido</th>
+              <th>Guía de Envío</th>
+              <th>Fecha Creación</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="pedidos-tbody">
+            <tr><td colspan="8" class="empty-state">Cargando pedidos...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

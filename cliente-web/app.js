@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initModal();
   initClientes();
   initInventario();
+  initPedidos();
 });
 
 // ── 1. NAVEGACIÓN SPA ─────────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ function onTabActivated(tabName) {
       loadInventario();
       break;
     case "pedidos":
-      // Bloque 3 (T-27)
+      loadPedidos();
       break;
     case "envios":
       // Bloque 4 (T-28)
@@ -818,5 +819,444 @@ async function handleUpdateProduct(e, id) {
     loadInventario();
   } catch (err) {
     showToast(`Error al actualizar producto: ${err.message}`, "error");
+  }
+}
+
+// ── 7. SECCIÓN PEDIDOS (T-27) ─────────────────────────────────────────────────
+
+let cachedActiveCustomers = [];
+let cachedAvailableProducts = [];
+
+function initPedidos() {
+  const btnToggle = document.getElementById("btn-toggle-pedido-form");
+  const btnCancel = document.getElementById("btn-cancel-pedido-form");
+  const cardForm = document.getElementById("card-crear-pedido");
+  const form = document.getElementById("form-crear-pedido");
+  const btnRefresh = document.getElementById("btn-refresh-pedidos");
+  const btnAddItem = document.getElementById("btn-add-item-row");
+
+  if (btnToggle && cardForm) {
+    btnToggle.addEventListener("click", async () => {
+      const isHidden = cardForm.style.display === "none";
+      if (isHidden) {
+        cardForm.style.display = "block";
+        btnToggle.textContent = "✖ Cerrar Formulario";
+        await prepareOrderForm();
+      } else {
+        cardForm.style.display = "none";
+        btnToggle.textContent = "➕ Nuevo Pedido";
+      }
+    });
+  }
+
+  if (btnCancel && cardForm && btnToggle) {
+    btnCancel.addEventListener("click", () => {
+      cardForm.style.display = "none";
+      btnToggle.textContent = "➕ Nuevo Pedido";
+      form.reset();
+      const container = document.getElementById("pedido-items-container");
+      if (container) container.innerHTML = "";
+    });
+  }
+
+  if (btnRefresh) {
+    btnRefresh.addEventListener("click", () => {
+      loadPedidos();
+      showToast("Actualizando pedidos...", "info");
+    });
+  }
+
+  if (btnAddItem) {
+    btnAddItem.addEventListener("click", () => {
+      addOrderItemRow();
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await handleCreatePedido();
+    });
+  }
+}
+
+/**
+ * Prepara el formulario de nuevo pedido cargando clientes activos y productos disponibles.
+ */
+async function prepareOrderForm() {
+  const customerSelect = document.getElementById("pedido-customer-select");
+  const itemsContainer = document.getElementById("pedido-items-container");
+  if (!customerSelect || !itemsContainer) return;
+
+  customerSelect.innerHTML = `<option value="">Cargando clientes activos...</option>`;
+  itemsContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem;">Cargando catálogo de productos...</div>`;
+
+  try {
+    const [customersData, productsData] = await Promise.all([
+      apiFetch(`${CONFIG.URL_CLIENTES}/customers`),
+      apiFetch(`${CONFIG.URL_INVENTARIO}/products`)
+    ]);
+
+    // Filtrar solo clientes activos
+    const allCustomers = customersData && Array.isArray(customersData.items) ? customersData.items : [];
+    cachedActiveCustomers = allCustomers.filter((c) => c.is_active);
+
+    // Filtrar solo productos activos y con stock > 0
+    const allProducts = productsData && Array.isArray(productsData.items) ? productsData.items : [];
+    cachedAvailableProducts = allProducts.filter((p) => p.is_active && p.stock > 0);
+
+    // Poblar selector de clientes
+    if (cachedActiveCustomers.length === 0) {
+      customerSelect.innerHTML = `<option value="">⚠️ No hay clientes activos disponibles</option>`;
+    } else {
+      customerSelect.innerHTML = `
+        <option value="">-- Selecciona un cliente activo --</option>
+        ${cachedActiveCustomers
+          .map(
+            (c) =>
+              `<option value="${c.id}">#${c.id} - ${escapeHtml(c.full_name)} (Zona: ${escapeHtml(c.coverage_zone)})</option>`
+          )
+          .join("")}
+      `;
+    }
+
+    // Inicializar con 1 fila de item si hay productos
+    itemsContainer.innerHTML = "";
+    if (cachedAvailableProducts.length === 0) {
+      itemsContainer.innerHTML = `<div style="color: var(--danger); font-size: 0.85rem;">⚠️ No hay productos con stock disponible para crear un pedido.</div>`;
+    } else {
+      addOrderItemRow();
+    }
+  } catch (err) {
+    showToast(`Error al preparar formulario de pedido: ${err.message}`, "error");
+    customerSelect.innerHTML = `<option value="">Error al cargar clientes</option>`;
+    itemsContainer.innerHTML = `<div style="color: var(--danger);">Error cargando catálogo</div>`;
+  }
+}
+
+function addOrderItemRow(selectedProductId = "", quantity = 1) {
+  const container = document.getElementById("pedido-items-container");
+  if (!container) return;
+
+  if (cachedAvailableProducts.length === 0) {
+    showToast("No hay productos disponibles en inventario.", "warning");
+    return;
+  }
+
+  const row = document.createElement("div");
+  row.className = "item-row";
+
+  const optionsHtml = cachedAvailableProducts
+    .map(
+      (p) =>
+        `<option value="${p.id}" ${p.id == selectedProductId ? "selected" : ""}>
+          #${p.id} [${escapeHtml(p.sku)}] ${escapeHtml(p.name)} — $${p.unit_price.toFixed(2)} (Stock: ${p.stock})
+        </option>`
+    )
+    .join("");
+
+  row.innerHTML = `
+    <div>
+      <select class="item-product-select form-select" required>
+        <option value="">-- Seleccionar Producto --</option>
+        ${optionsHtml}
+      </select>
+    </div>
+    <div>
+      <input type="number" class="item-qty-input form-input" min="1" value="${quantity}" placeholder="Cant." required />
+    </div>
+    <div>
+      <button type="button" class="item-row-btn-remove" title="Eliminar fila" onclick="removeOrderItemRow(this)">✕</button>
+    </div>
+  `;
+
+  container.appendChild(row);
+}
+
+function removeOrderItemRow(buttonEl) {
+  const container = document.getElementById("pedido-items-container");
+  if (!container) return;
+
+  const rows = container.querySelectorAll(".item-row");
+  if (rows.length <= 1) {
+    showToast("El pedido debe contener al menos 1 producto.", "warning");
+    return;
+  }
+
+  const row = buttonEl.closest(".item-row");
+  if (row) row.remove();
+}
+
+async function handleCreatePedido() {
+  const customerSelect = document.getElementById("pedido-customer-select");
+  const customerId = parseInt(customerSelect.value, 10);
+
+  if (!customerId || isNaN(customerId)) {
+    showToast("Debes seleccionar un cliente activo.", "warning");
+    return;
+  }
+
+  const container = document.getElementById("pedido-items-container");
+  const itemRows = container ? container.querySelectorAll(".item-row") : [];
+
+  if (itemRows.length === 0) {
+    showToast("Debes agregar al menos un producto al pedido.", "warning");
+    return;
+  }
+
+  const items = [];
+  const seenProductIds = new Set();
+
+  for (const row of itemRows) {
+    const prodSelect = row.querySelector(".item-product-select");
+    const qtyInput = row.querySelector(".item-qty-input");
+
+    const productId = parseInt(prodSelect.value, 10);
+    const quantity = parseInt(qtyInput.value, 10);
+
+    if (!productId || isNaN(productId)) {
+      showToast("Selecciona un producto válido en cada fila.", "warning");
+      return;
+    }
+
+    if (!quantity || isNaN(quantity) || quantity <= 0) {
+      showToast("La cantidad de cada producto debe ser mayor a cero.", "warning");
+      return;
+    }
+
+    if (seenProductIds.has(productId)) {
+      showToast("No puedes incluir el mismo producto dos veces en el pedido.", "warning");
+      return;
+    }
+
+    seenProductIds.add(productId);
+    items.push({ product_id: productId, quantity });
+  }
+
+  const payload = {
+    customer_id: customerId,
+    items
+  };
+
+  const btnSubmit = document.getElementById("btn-submit-pedido");
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<span class="spinner"></span> Orquestando Saga...`;
+  }
+
+  try {
+    showToast("Iniciando orquestación Saga del pedido...", "info");
+    const res = await apiFetch(`${CONFIG.URL_PEDIDOS}/orders`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    showToast(`✅ ¡Pedido #${res.id} confirmado con éxito! Total: $${res.total_amount.toFixed(2)} (Guía #${res.shipment_id || "N/A"})`, "success");
+
+    // Limpiar y cerrar formulario
+    document.getElementById("form-crear-pedido").reset();
+    document.getElementById("card-crear-pedido").style.display = "none";
+    const btnToggle = document.getElementById("btn-toggle-pedido-form");
+    if (btnToggle) btnToggle.textContent = "➕ Nuevo Pedido";
+
+    loadPedidos();
+  } catch (err) {
+    showToast(`Error en la orquestación: ${err.message}`, "error");
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = `⚡ Crear y Orquestar Pedido`;
+    }
+  }
+}
+
+async function loadPedidos() {
+  const tbody = document.getElementById("pedidos-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Cargando pedidos...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${CONFIG.URL_PEDIDOS}/orders`);
+    const items = data && Array.isArray(data.items) ? data.items : [];
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No hay pedidos registrados en el sistema.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items
+      .map((o) => {
+        const statusBadge = getOrderStatusBadge(o.status);
+        const canCancel = o.status === "PENDING" || o.status === "CONFIRMED";
+        const cancelBtn = canCancel
+          ? `<button class="btn btn-sm btn-danger" onclick="cancelPedido(${o.id})">Cancelar</button>`
+          : "";
+
+        const shipmentText = o.shipment_id
+          ? `<span class="sku-badge">Guía #${o.shipment_id}</span>`
+          : `<span style="color: var(--text-muted); font-size: 0.8rem;">Sin guía</span>`;
+
+        return `
+          <tr>
+            <td><strong>#${o.id}</strong></td>
+            <td><a href="#" style="color: var(--primary); font-weight: 600; text-decoration: none;" onclick="showPedidoDetail(${o.id}); return false;">${escapeHtml(o.customer_name)}</a></td>
+            <td><span class="badge" style="background:#f1f5f9; color:#334155;">${escapeHtml(o.coverage_zone)}</span></td>
+            <td><strong>$${o.total_amount.toFixed(2)}</strong></td>
+            <td>${statusBadge}</td>
+            <td>${shipmentText}</td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">${new Date(o.created_at).toLocaleString("es-MX")}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-sm btn-outline" onclick="showPedidoDetail(${o.id})">Ver</button>
+              ${cancelBtn}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color: var(--danger);">Error al cargar pedidos: ${err.message}</td></tr>`;
+    showToast(`Error cargando pedidos: ${err.message}`, "error");
+  }
+}
+
+function getOrderStatusBadge(status) {
+  switch (status) {
+    case "CONFIRMED":
+      return `<span class="badge badge-confirmed">CONFIRMADO</span>`;
+    case "PENDING":
+      return `<span class="badge badge-pending">PENDIENTE</span>`;
+    case "CANCELLED":
+      return `<span class="badge badge-cancelled">CANCELADO</span>`;
+    case "FAILED":
+      return `<span class="badge badge-failed">FALLIDO</span>`;
+    default:
+      return `<span class="badge">${escapeHtml(status)}</span>`;
+  }
+}
+
+async function showPedidoDetail(id) {
+  try {
+    const o = await apiFetch(`${CONFIG.URL_PEDIDOS}/orders/${id}`);
+
+    // Items table
+    const itemsHtml = (o.items || [])
+      .map(
+        (it) => `
+        <tr>
+          <td>#${it.product_id} — ${escapeHtml(it.product_name)}</td>
+          <td style="text-align: center;">${it.quantity}</td>
+          <td style="text-align: right;">$${it.unit_price.toFixed(2)}</td>
+          <td style="text-align: right;"><strong>$${it.subtotal.toFixed(2)}</strong></td>
+        </tr>
+      `
+      )
+      .join("");
+
+    // Shipment status text
+    let shipmentDisplay = "";
+    if (o.shipment_status) {
+      shipmentDisplay = `<span class="badge badge-${o.shipment_status.toLowerCase()}">${escapeHtml(o.shipment_status)}</span>`;
+    } else {
+      shipmentDisplay = `<span style="color: var(--warning); font-style: italic;">${escapeHtml(o.shipment_detail || "No disponible")}</span>`;
+    }
+
+    // Compensation error banner if failed
+    let compensationBanner = "";
+    if (o.status === "FAILED" && o.compensation_error) {
+      compensationBanner = `
+        <div style="background-color: var(--danger-bg); border: 1px solid var(--danger-border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; color: #991b1b; font-size: 0.85rem;">
+          <strong>⚠️ Fallo en Compensación Saga:</strong> ${escapeHtml(o.compensation_error)}
+        </div>
+      `;
+    }
+
+    const canCancel = o.status === "PENDING" || o.status === "CONFIRMED";
+    const cancelModalBtn = canCancel
+      ? `<button class="btn btn-danger" onclick="cancelPedido(${o.id})">Cancelar Pedido</button>`
+      : "";
+
+    const content = `
+      ${compensationBanner}
+      <div class="detail-grid" style="margin-bottom: 1.25rem;">
+        <span class="detail-label">ID Pedido:</span>
+        <span class="detail-value"><strong>#${o.id}</strong></span>
+
+        <span class="detail-label">Cliente:</span>
+        <span class="detail-value">${escapeHtml(o.customer_name)} (ID: #${o.customer_id})</span>
+
+        <span class="detail-label">Zona Cobertura:</span>
+        <span class="detail-value"><span class="badge" style="background:#e0e7ff; color:#3730a3;">${escapeHtml(o.coverage_zone)}</span></span>
+
+        <span class="detail-label">Estado Pedido:</span>
+        <span class="detail-value">${getOrderStatusBadge(o.status)}</span>
+
+        <span class="detail-label">Guía de Envío:</span>
+        <span class="detail-value">
+          ${o.shipment_id ? `#${o.shipment_id} — ` : ""}
+          ${shipmentDisplay}
+        </span>
+
+        <span class="detail-label">Fecha Creación:</span>
+        <span class="detail-value">${new Date(o.created_at).toLocaleString("es-MX")}</span>
+      </div>
+
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-main);">Productos Adquiridos:</h4>
+      <table class="data-table" style="margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th style="text-align: center;">Cantidad</th>
+            <th style="text-align: right;">Precio Unit.</th>
+            <th style="text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml || '<tr><td colspan="4" class="empty-state">Sin items</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="background-color: #f8fafc; padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.875rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Costo de Envío:</span>
+          <span>$${o.shipping_cost.toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; border-top: 1px solid var(--border-color); padding-top: 0.35rem; color: var(--primary);">
+          <span>Total del Pedido:</span>
+          <span>$${o.total_amount.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+        ${cancelModalBtn}
+      </div>
+    `;
+
+    openModal(`Detalle del Pedido #${o.id}`, content);
+  } catch (err) {
+    showToast(`Error al consultar pedido: ${err.message}`, "error");
+  }
+}
+
+async function cancelPedido(id) {
+  if (
+    !confirm(
+      `¿Estás seguro de cancelar el pedido #${id}?\n\nEsta acción cancelará la guía de entrega y liberará el stock reservado mediante la Saga de compensación.`
+    )
+  ) {
+    return;
+  }
+
+  try {
+    showToast(`Cancelando pedido #${id}...`, "info");
+    await apiFetch(`${CONFIG.URL_PEDIDOS}/orders/${id}/cancel`, {
+      method: "PATCH"
+    });
+
+    showToast(`✅ Pedido #${id} cancelado y stock liberado exitosamente.`, "success");
+    closeModal();
+    loadPedidos();
+  } catch (err) {
+    showToast(`Error al cancelar pedido: ${err.message}`, "error");
   }
 }

@@ -20,7 +20,7 @@
 | T-24 | Dashboard: estado de salud de los 4 servicios                       | RF-3, CF-3                      | ✅ Completada  |
 | T-25 | Sección Clientes: listar, crear, desactivar, reactivar              | RF-4, CF-4, CF-5                | ✅ Completada  |
 | T-26 | Sección Inventario: listar, crear, editar                           | RF-5, CF-6, CF-7                | ✅ Completada  |
-| T-27 | Sección Pedidos: listar, crear, ver detalle, cancelar               | RF-6, CF-8–11                   | ⬜ Pendiente   |
+| T-27 | Sección Pedidos: listar, crear, ver detalle, cancelar               | RF-6, CF-8–11                   | ✅ Completada  |
 | T-28 | Sección Envíos: listar, ver detalle, cambiar estado                 | RF-7, CF-12, CF-13              | ⬜ Pendiente   |
 | T-29 | Manejo de errores global y feedback visual (spinners)               | RF-8, CF-14, CF-15              | ⬜ Pendiente   |
 | T-30 | Verificación de Criterios de Finalización (CF-1 a CF-16)            | Todos los CF                    | ⬜ Pendiente   |
@@ -144,7 +144,7 @@ En `app.js`, implementar:
 ### T-27 — Sección Pedidos
 
 **RF cubiertos:** RF-6 (6.1–6.4), CF-8, CF-9, CF-10, CF-11  
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 
 En la sección `#pedidos` de `index.html`, agregar:
 - Tabla de pedidos con columnas: ID, Cliente, Zona, Total, Estado, ID Envío, Fecha, Acciones.
