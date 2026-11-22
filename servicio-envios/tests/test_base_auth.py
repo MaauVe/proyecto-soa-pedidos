@@ -1,25 +1,44 @@
 """
-Tests consolidados para T-01, T-02, T-03 y T-04 (Bloque 1) — servicio-envios.
+Tests consolidados para Bloque 1 y Bloque 2 (zonas y cotización) — servicio-envios.
 Cubre:
 - T-01: Carga de configuración y paths (RNF-4, RNF-5, RNF-7).
 - T-02: Esquema SQLite de shipments, DDL, tablas, índices y restricciones CHECK (RF-1, RNF-3).
 - T-03: Autenticación X-API-Key y manejo de header ausente/inválido con 401 (RF-9).
 - T-04: Endpoint público /health y metadatos de FastAPI (RF-2, RF-10).
+- T-06: Endpoint GET /zones — Zonas y tarifas configuradas (RF-3).
+- T-07: Endpoint POST /quote — Cotización por zona y validaciones (RF-4).
 """
+import inspect
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 import config
 from auth import verify_api_key
 from database import get_connection, init_db
-from main import app, health_check
+from main import app, get_zones, health_check, quote_shipping
+from schemas import QuoteRequest, ZoneEnum
 
 VALID_KEY = config.API_KEY
 WRONG_KEY = "clave-invalida-prueba"
+
+
+def _route_requires_auth(path: str, method: str) -> bool:
+    """Verifica si una ruta y método de FastAPI exigen la dependencia verify_api_key."""
+    route = next((r for r in app.routes if getattr(r, "path", None) == path and method in getattr(r, "methods", [])), None)
+    if not route:
+        return False
+    param_deps = [
+        param.default.dependency
+        for param in inspect.signature(route.endpoint).parameters.values()
+        if hasattr(param.default, "dependency")
+    ]
+    dep_callables = [d.dependency for d in getattr(route, "dependencies", [])]
+    return verify_api_key in (param_deps + dep_callables)
 
 
 # ── T-01: Configuración ────────────────────────────────────────────────────────
@@ -229,3 +248,67 @@ class TestHealthAndApp:
         assert app.version == "0.1.0"
         assert app.docs_url == "/docs"
         assert app.redoc_url == "/redoc"
+
+
+# ── T-06: GET /zones ──────────────────────────────────────────────────────────
+
+class TestZones:
+    def test_zones_route_requires_auth(self):
+        """GET /zones exige autenticación con X-API-Key."""
+        assert _route_requires_auth("/zones", "GET"), "GET /zones debe exigir verify_api_key"
+
+    def test_get_zones_returns_all_three_zones(self):
+        """GET /zones retorna exactamente las 3 zonas esperadas."""
+        zones = get_zones(_api_key=VALID_KEY)
+        assert len(zones) == 3
+        zone_names = [z["zone"] for z in zones]
+        assert "LOCAL" in zone_names
+        assert "REGIONAL" in zone_names
+        assert "NACIONAL" in zone_names
+
+    def test_get_zones_rates_match_config(self):
+        """Las tarifas retornadas coinciden con los valores configurados en variables de entorno."""
+        zones = get_zones(_api_key=VALID_KEY)
+        zone_map = {z["zone"]: z["rate"] for z in zones}
+        assert zone_map["LOCAL"] == config.RATE_LOCAL
+        assert zone_map["REGIONAL"] == config.RATE_REGIONAL
+        assert zone_map["NACIONAL"] == config.RATE_NACIONAL
+
+
+# ── T-07: POST /quote ─────────────────────────────────────────────────────────
+
+class TestQuote:
+    def test_quote_route_requires_auth(self):
+        """POST /quote exige autenticación con X-API-Key."""
+        assert _route_requires_auth("/quote", "POST"), "POST /quote debe exigir verify_api_key"
+
+    def test_quote_local_rate(self):
+        """Cotizar zona LOCAL retorna RATE_LOCAL."""
+        req = QuoteRequest(zone=ZoneEnum.LOCAL)
+        res = quote_shipping(quote_in=req, _api_key=VALID_KEY)
+        assert res["zone"] == "LOCAL"
+        assert res["shipping_cost"] == config.RATE_LOCAL
+
+    def test_quote_regional_rate(self):
+        """Cotizar zona REGIONAL retorna RATE_REGIONAL."""
+        req = QuoteRequest(zone=ZoneEnum.REGIONAL)
+        res = quote_shipping(quote_in=req, _api_key=VALID_KEY)
+        assert res["zone"] == "REGIONAL"
+        assert res["shipping_cost"] == config.RATE_REGIONAL
+
+    def test_quote_nacional_rate(self):
+        """Cotizar zona NACIONAL retorna RATE_NACIONAL."""
+        req = QuoteRequest(zone=ZoneEnum.NACIONAL)
+        res = quote_shipping(quote_in=req, _api_key=VALID_KEY)
+        assert res["zone"] == "NACIONAL"
+        assert res["shipping_cost"] == config.RATE_NACIONAL
+
+    def test_quote_invalid_zone_raises_validation_error(self):
+        """Zona inexistente ('EXPRES') es rechazada por validación Pydantic."""
+        with pytest.raises(ValidationError):
+            QuoteRequest(zone="EXPRES")
+
+    def test_quote_lowercase_zone_raises_validation_error(self):
+        """Zona en minúsculas ('local') es rechazada por el enum estricto."""
+        with pytest.raises(ValidationError):
+            QuoteRequest(zone="local")

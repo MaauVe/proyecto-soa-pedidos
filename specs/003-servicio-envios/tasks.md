@@ -82,8 +82,9 @@ servicio-envios/
 
 ## Bloque 2 — Zonas, cotización y CRUD de envíos (creación y consulta)
 
-### T-05 — Esquemas Pydantic
+### ✅ T-05 — Esquemas Pydantic
 **RF cubiertos:** RNF-1
+**Estado:** ✅ Completada
 
 Definir en `schemas.py` todos los modelos de entrada y salida:
 
@@ -106,8 +107,9 @@ Validaciones:
 
 ---
 
-### T-06 — `GET /zones` — Consulta de zonas disponibles
+### ✅ T-06 — `GET /zones` — Consulta de zonas disponibles
 **RF cubiertos:** RF-3
+**Estado:** ✅ Completada
 
 Endpoint protegido que retorna la lista de 3 zonas con sus tarifas leídas de `settings`.
 
@@ -118,8 +120,9 @@ Endpoint protegido que retorna la lista de 3 zonas con sus tarifas leídas de `s
 
 ---
 
-### T-07 — `POST /quote` — Cotización de envío
+### ✅ T-07 — `POST /quote` — Cotización de envío
 **RF cubiertos:** RF-4
+**Estado:** ✅ Completada
 
 Endpoint protegido que recibe `zone` y retorna `shipping_cost`.
 
@@ -132,8 +135,9 @@ Endpoint protegido que recibe `zone` y retorna `shipping_cost`.
 
 ---
 
-### T-08 — `POST /shipments` — Creación de envío
+### ✅ T-08 — `POST /shipments` — Creación de envío
 **RF cubiertos:** RF-5
+**Estado:** ✅ Completada
 
 Endpoint protegido. Crea el registro con `status = PENDING` y `shipping_cost` tomado de `settings` según la zona.
 
@@ -146,8 +150,9 @@ Endpoint protegido. Crea el registro con `status = PENDING` y `shipping_cost` to
 
 ---
 
-### T-09 — `GET /shipments/{id}` — Consulta por ID
+### ✅ T-09 — `GET /shipments/{id}` — Consulta por ID
 **RF cubiertos:** RF-6
+**Estado:** ✅ Completada
 
 **Pruebas en `test_shipments.py`:**
 - Crear un envío y consultarlo por `id` → HTTP 200 con todos los 8 campos.
@@ -156,8 +161,9 @@ Endpoint protegido. Crea el registro con `status = PENDING` y `shipping_cost` to
 
 ---
 
-### T-10 — `GET /shipments` — Listado paginado
+### ✅ T-10 — `GET /shipments` — Listado paginado
 **RF cubiertos:** RF-7
+**Estado:** ✅ Completada
 
 Endpoint protegido. Retorna lista paginada de envíos con filtros opcionales por `status` y `order_id`.
 
