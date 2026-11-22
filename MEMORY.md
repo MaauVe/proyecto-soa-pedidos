@@ -1,21 +1,20 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 2 — servicio-inventario ✅ COMPLETADA Y VERIFICADA (79/79 tests)
-- **Última tarea**: T-14 ✅ — Criterios de finalización CF-1 a CF-12 cumplidos
-- **Siguiente paso**: Fase 3 — Servicio de Envíos (puerto 8003, envios.db)
-- **Fecha de cierre Fase 2**: 2026-11-21
+- **Fase**: 3 — servicio-envios (puerto 8003, envios.db)
+- **Última tarea**: T-04 ✅ — Bloque 1 completado y verificado (20/20 tests en verde)
+- **Siguiente paso**: Bloque 2 — Zonas, cotización y CRUD de envíos (T-05 a T-10)
+- **Fecha**: 2026-11-22
 
-## Decisiones Técnicas Consolidadas — servicio-inventario
+## Decisiones Técnicas Consolidadas — servicio-envios
 | Decisión | Valor |
 |---|---|
-| Base de datos | SQLite nativo en `servicio-inventario/inventario.db` (sin ORM externo) |
-| Configuración | `.env` raíz cargado con `find_dotenv()`, puerto 8002 |
-| Handlers y Auth | Funciones síncronas `def`, `X-API-Key` obligatoria (salvo `/health`) |
-| Seed | 5 productos semilla automáticos (1 inactivo con stock 0) |
-| CRUD productos | Validación SKU insensible a mayúsculas, soft-delete y reactivación |
-| Operaciones stock | Transacciones atómicas SQLite (rollback total en reserva, release suma siempre) |
-| Pruebas consolidadas | 3 archivos: `test_base_auth.py`, `test_products_crud.py`, `test_stock_ops.py` |
+| Base de datos | SQLite nativo en `servicio-envios/envios.db` (sin ORM externo) |
+| Configuración | `.env` raíz con `find_dotenv()`, puerto 8003 |
+| Tarifas de zonas | Planas desde `.env`: `RATE_LOCAL=50`, `RATE_REGIONAL=100`, `RATE_NACIONAL=200` |
+| Estados de envío | `PENDING → IN_TRANSIT → DELIVERED` / `CANCELLED` |
+| Autenticación | `X-API-Key` obligatoria (salvo `GET /health`), 401 si ausente/inválida |
+| Pruebas consolidadas | 2 archivos: `test_base_auth.py` y `test_shipments.py` |
 
 ## Decisiones Arquitectónicas
 - 4 servicios FastAPI independientes, bajo acoplamiento SOA.
@@ -23,8 +22,8 @@
 - Variables de entorno centralizadas sin credenciales en Git.
 
 ## Próximos Pasos
-1. ⬜ Commit en GitHub de Fase 2 completada (responsabilidad del desarrollador).
-2. 🔵 Fase 3: Redacción y aprobación de `specs/003-servicio-envios/spec.md`.
-3. ⬜ Fase 3: Plan `tasks.md` e implementación TDD de `servicio-envios` (puerto 8003).
+1. ⬜ Usuario: actualizar `.env` local y commit de Bloque 1 en GitHub.
+2. ⬜ Fase 3: Bloque 2 — Implementación de `GET /zones`, `POST /quote` y creación/consulta de envíos.
+3. ⬜ Fase 3: Bloque 3 — Máquina de estados y verificación final de CFs.
 4. ⬜ Fase 4: Spec + implementación de `servicio-pedidos` (orquestador, puerto 8004).
 5. ⬜ Fase 5: Implementación de `cliente-web`.
