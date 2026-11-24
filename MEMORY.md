@@ -1,10 +1,10 @@
 # MEMORY.md — Estado del Proyecto SOA: Gestión de Pedidos y Entregas
 
 ## Estado Actual
-- **Fase**: 5 — cliente-web ✅ COMPLETADA Y VERIFICADA (CF-1 a CF-16)
-- **Última tarea**: T-30 ✅ — Verificación integral del frontend y arquitectura SOA
-- **Siguiente paso**: Cierre y entrega final del proyecto SOA
-- **Fecha de cierre Fase 5**: 2026-11-22
+- **Fase**: Cierre y Documentación ✅ COMPLETADA
+- **Última tarea**: Redacción de README.md principal en la raíz del proyecto
+- **Siguiente paso**: Presentación / Entrega final del proyecto SOA
+- **Fecha**: 2026-11-23
 
 ## Decisiones Técnicas — cliente-web (Frontend Completo)
 | Decisión | Valor |
@@ -21,8 +21,9 @@
 - **Microservicios (4)**: `clientes` (:8001), `inventario` (:8002), `envios` (:8003), `pedidos` (:8004).
 - **Bases de datos**: 4 bases de datos SQLite nativas 100% aisladas.
 - **Pruebas backend**: 301 tests automatizados con `pytest` pasando al 100%.
-- **Frontend**: SPA pura interactiva servible con cualquier servidor estático.
+- **Frontend**: SPA pura interactiva servible en `http://localhost:5500`.
+- **Orquestador de arranque**: `python run_services.py` levanta todo el sistema.
 
 ## Próximos Pasos
-1. 🛑 Usuario: Verificación final en el navegador y commit en GitHub de Fase 5.
+1. 🛑 Usuario: Verificación final en el navegador y commit en GitHub.
 2. ⬜ Presentación o entrega del Proyecto Final SOA.
