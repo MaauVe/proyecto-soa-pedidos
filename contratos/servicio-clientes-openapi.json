@@ -1,0 +1,830 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Servicio de Clientes",
+    "description": "API REST para la gestión del catálogo de clientes. Permite registrar, consultar, actualizar y desactivar clientes, y expone un endpoint de validación para otros servicios del sistema SOA.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Verificación de salud del servicio",
+        "description": "Retorna el estado de salud del servicio.\nEste endpoint no requiere autenticación.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Estado operativo del servicio",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers": {
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Crear un nuevo cliente",
+        "description": "Registra un cliente en el catálogo validando la unicidad del correo electrónico.",
+        "operationId": "create_customer_customers_post",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listado paginado de clientes",
+        "description": "Retorna el listado paginado de clientes con opción de filtrar por estado activo/inactivo.",
+        "operationId": "list_customers_customers_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (≥ 1)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (≥ 1)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Cantidad de elementos por página (1 a 100)",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Cantidad de elementos por página (1 a 100)"
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por estado activo (true/false)",
+              "title": "Is Active"
+            },
+            "description": "Filtrar por estado activo (true/false)"
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Consultar cliente por ID",
+        "description": "Retorna la información completa de un cliente por su identificador único.",
+        "operationId": "get_customer_customers__customer_id__get",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Actualización parcial de cliente",
+        "description": "Actualiza uno o varios campos de un cliente existente.",
+        "operationId": "update_customer_customers__customer_id__patch",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Desactivar cliente (borrado lógico)",
+        "description": "Desactiva un cliente marcando is_active=false. El registro permanece en la base de datos.",
+        "operationId": "deactivate_customer_customers__customer_id__delete",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/validate": {
+      "get": {
+        "tags": [
+          "Clientes",
+          "Integración"
+        ],
+        "summary": "Validar cliente para servicios externos",
+        "description": "Endpoint consumido por otros servicios (ej. servicio-pedidos) para validar si un cliente existe y se encuentra activo.",
+        "operationId": "validate_customer_customers__customer_id__validate_get",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerValidateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/reactivate": {
+      "patch": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Reactivar un cliente",
+        "description": "Reactiva un cliente previamente desactivado marcando is_active=true.",
+        "operationId": "reactivate_customer_customers__customer_id__reactivate_patch",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave de autenticación requerida en todos los endpoints protegidos.",
+              "title": "X-Api-Key"
+            },
+            "description": "Clave de autenticación requerida en todos los endpoints protegidos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CustomerCreate": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name",
+            "description": "Nombre completo del cliente"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Email",
+            "description": "Correo electrónico del cliente"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Phone",
+            "description": "Teléfono de contacto"
+          },
+          "delivery_address": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Delivery Address",
+            "description": "Dirección de entrega"
+          },
+          "coverage_zone": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Coverage Zone",
+            "description": "Zona de cobertura (ej. Local, Regional, Nacional)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "phone",
+          "delivery_address",
+          "coverage_zone"
+        ],
+        "title": "CustomerCreate",
+        "description": "Esquema para la creación de un nuevo cliente."
+      },
+      "CustomerListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Total de clientes que cumplen el criterio"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Página actual"
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "Elementos por página"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Pages",
+            "description": "Total de páginas disponibles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "CustomerListResponse",
+        "description": "Esquema para la lista paginada de clientes."
+      },
+      "CustomerResponse": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name",
+            "description": "Nombre completo del cliente"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Email",
+            "description": "Correo electrónico del cliente"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Phone",
+            "description": "Teléfono de contacto"
+          },
+          "delivery_address": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Delivery Address",
+            "description": "Dirección de entrega"
+          },
+          "coverage_zone": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Coverage Zone",
+            "description": "Zona de cobertura (ej. Local, Regional, Nacional)"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "phone",
+          "delivery_address",
+          "coverage_zone",
+          "id",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CustomerResponse",
+        "description": "Esquema de respuesta completa para un cliente."
+      },
+      "CustomerUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "description": "Nombre completo del cliente"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "Correo electrónico del cliente"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone",
+            "description": "Teléfono de contacto"
+          },
+          "delivery_address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Address",
+            "description": "Dirección de entrega"
+          },
+          "coverage_zone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Zone",
+            "description": "Zona de cobertura (ej. Local, Regional, Nacional)"
+          }
+        },
+        "type": "object",
+        "title": "CustomerUpdate",
+        "description": "Esquema para la actualización parcial de un cliente."
+      },
+      "CustomerValidateResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "coverage_zone": {
+            "type": "string",
+            "title": "Coverage Zone"
+          },
+          "delivery_address": {
+            "type": "string",
+            "title": "Delivery Address"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "coverage_zone",
+          "delivery_address",
+          "is_active"
+        ],
+        "title": "CustomerValidateResponse",
+        "description": "Esquema de respuesta para validación inter-servicio (GET /customers/{id}/validate)."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
